@@ -26,6 +26,7 @@ def check_write_permissions(path):
         app.logger.error(f"No write permissions for {path}")
 
 class FormularioEnvio(FlaskForm):
+    # Exportador fields
     ruc_exportador = StringField('RUC Exportador', validators=[DataRequired()])
     razon_social_exportador = StringField('Razón Social Exportador', validators=[DataRequired()])
     domicilio_fiscal_exportador = StringField('Domicilio Fiscal Exportador', validators=[DataRequired()])
@@ -60,6 +61,37 @@ class FormularioEnvio(FlaskForm):
     reinpo_exportador = StringField('REINPO Exportador', validators=[DataRequired()])
     ciudad_exportador = StringField('Ciudad Exportador', validators=[DataRequired()])
     fecharegistro_exportador = DateField('Fecha Registro Exportador', format='%Y-%m-%d', validators=[DataRequired()])
+
+    # Productor fields
+    ruc_productor = StringField('RUC Productor', validators=[DataRequired()])
+    razon_social_productor = StringField('Razón Social Productor', validators=[DataRequired()])
+    domicilio_fiscal_productor = StringField('Domicilio Fiscal Productor', validators=[DataRequired()])
+    dni_productor = StringField('DNI Productor', validators=[DataRequired()])
+    departamento_productor = StringField('Departamento Productor', validators=[DataRequired()])
+    factura_productor = StringField('Factura N° Productor', validators=[DataRequired()])
+    fecha_factura_productor = DateField('Fecha Factura Productor', format='%Y-%m-%d', validators=[DataRequired()])
+    valor_fob_productor = DecimalField('Valor FOB Productor', validators=[DataRequired()])
+    peso_neto_productor = DecimalField('Peso Neto Productor', validators=[DataRequired()])
+    peso_fino_productor = DecimalField('Peso Fino Productor', validators=[DataRequired()])
+    tipo_producto_productor = StringField('Tipo de Producto Productor', validators=[DataRequired()])
+    barra_de_oro_dore_productor = StringField('Barra de Oro Doré Productor', validators=[DataRequired()])
+    peso_no_oro_productor = DecimalField('Peso No Oro Productor', validators=[DataRequired()])
+    guia_remision_productor = StringField('Guía de Remisión Productor', validators=[DataRequired()])
+    recpo_n_productor = StringField('RECPO N° Productor', validators=[DataRequired()])
+    concesion_minera_productor = StringField('Concesión Minera Productor', validators=[DataRequired()])
+    codigo_ingemmet_n_productor = StringField('Código INGEMMET N° Productor', validators=[DataRequired()])
+    fecha_registro_productor = DateField('Fecha Registro Productor', format='%Y-%m-%d', validators=[DataRequired()])
+    fecha_guia_remision_productor = DateField('Fecha Guía Remisión Productor', format='%Y-%m-%d', validators=[DataRequired()])
+
+    # Transporte fields
+    ruc_transporte = StringField('RUC Transporte', validators=[DataRequired()])
+    razon_social_transporte = StringField('Razón Social Transporte', validators=[DataRequired()])
+    domicilio_fiscal_transporte = StringField('Domicilio Fiscal Transporte', validators=[DataRequired()])
+    vehiculo_transporte = StringField('Vehículo Transporte', validators=[DataRequired()])
+    marca_transporte = StringField('Marca Transporte', validators=[DataRequired()])
+    placa_transporte = StringField('Placa Transporte', validators=[DataRequired()])
+    guia_remision_transporte = StringField('Guía de Remisión Transportista', validators=[DataRequired()])
+
     submit = SubmitField('Enviar')
 
 @app.route('/', methods=['GET', 'POST'])
@@ -67,17 +99,19 @@ def index():
     form = FormularioEnvio()
     if request.method == 'POST':
         app.logger.info("Form submitted")
+        app.logger.info(f"Form data: {request.form}")
         if form.validate():
             app.logger.info("Form validated successfully")
         else:
             app.logger.error(f"Form validation failed: {form.errors}")
+            for field, errors in form.errors.items():
+                app.logger.error(f"Field {field} errors: {errors}")
     
     if form.validate_on_submit():
         try:
             app.logger.info("Form validated on submit")
             doc = generar_documento(form)
             
-            # Save the document to a file
             output_dir = os.path.join(basedir, 'output')
             app.logger.info(f"Output directory: {output_dir}")
             if not os.path.exists(output_dir):
@@ -91,14 +125,12 @@ def index():
             doc.save(output_path)
             app.logger.info(f"Document saved successfully to {output_path}")
             
-            # Verify file exists and get its size
             if os.path.exists(output_path):
                 file_size = os.path.getsize(output_path)
                 app.logger.info(f"File exists. Size: {file_size} bytes")
             else:
                 app.logger.error(f"File does not exist at {output_path}")
             
-            # Try to open and read the file after saving
             try:
                 with open(output_path, 'rb') as f:
                     content = f.read()
@@ -106,7 +138,6 @@ def index():
             except Exception as e:
                 app.logger.error(f"Error reading saved file: {str(e)}")
             
-            # Attempt to send the file
             app.logger.info("Attempting to send file")
             return send_file(
                 output_path,
@@ -135,8 +166,8 @@ def generar_documento(form):
         doc = Document(app.config['TEMPLATE_PATH'])
         app.logger.info("Document loaded from template")
         
-        # Create a dictionary of placeholders and their corresponding form values
         replacements = {
+            # Exportador replacements
             '[RUC_EXPORTADOR]': form.ruc_exportador.data,
             '[RAZON_SOCIAL_EXPORTADOR]': form.razon_social_exportador.data,
             '[DOMICILIO_FISCAL_EXPORTADOR]': form.domicilio_fiscal_exportador.data,
@@ -171,6 +202,36 @@ def generar_documento(form):
             '[REINPO_EXPORTADOR]': form.reinpo_exportador.data,
             '[CIUDAD_EXPORTADOR]': form.ciudad_exportador.data,
             '[FECHAREGISTRO_EXPORTADOR]': form.fecharegistro_exportador.data.strftime('%d/%m/%Y') if form.fecharegistro_exportador.data else '',
+            
+            # Productor replacements
+            '[RUC_PRODUCTOR]': form.ruc_productor.data,
+            '[RAZON_SOCIAL_PRODUCTOR]': form.razon_social_productor.data,
+            '[DOMICILIO_FISCAL_PRODUCTOR]': form.domicilio_fiscal_productor.data,
+            '[DNI_PRODUCTOR]': form.dni_productor.data,
+            '[DEPARTAMENTO_PRODUCTOR]': form.departamento_productor.data,
+            '[FACTURA_PRODUCTOR]': form.factura_productor.data,
+            '[FECHA_FACTURA_PRODUCTOR]': form.fecha_factura_productor.data.strftime('%d/%m/%Y') if form.fecha_factura_productor.data else '',
+            '[VALOR_FOB_PRODUCTOR]': str(form.valor_fob_productor.data),
+            '[PESO_NETO_PRODUCTOR]': str(form.peso_neto_productor.data),
+            '[PESO_FINO_PRODUCTOR]': str(form.peso_fino_productor.data),
+            '[TIPO_PRODUCTO_PRODUCTOR]': form.tipo_producto_productor.data,
+            '[BARRA_DE_ORO_DORE_PRODUCTOR]': form.barra_de_oro_dore_productor.data,
+            '[PESO_NO_ORO_PRODUCTOR]': str(form.peso_no_oro_productor.data),
+            '[GUIA_REMISION_PRODUCTOR]': form.guia_remision_productor.data,
+            '[RECPO_N_PRODUCTOR]': form.recpo_n_productor.data,
+            '[CONCESION_MINERA_PRODUCTOR]': form.concesion_minera_productor.data,
+            '[CODIGO_INGEMMET_N_PRODUCTOR]': form.codigo_ingemmet_n_productor.data,
+            '[FECHA_REGISTRO_PRODUCTOR]': form.fecha_registro_productor.data.strftime('%d/%m/%Y') if form.fecha_registro_productor.data else '',
+            '[FECHA_GUIA_REMISION_PRODUCTOR]': form.fecha_guia_remision_productor.data.strftime('%d/%m/%Y') if form.fecha_guia_remision_productor.data else '',
+            
+            # Transporte replacements
+            '[RUC_TRANSPORTE]': form.ruc_transporte.data,
+            '[RAZON_SOCIAL_TRANSPORTE]': form.razon_social_transporte.data,
+            '[DOMICILIO_FISCAL_TRANSPORTE]': form.domicilio_fiscal_transporte.data,
+            '[VEHICULO_TRANSPORTE]': form.vehiculo_transporte.data,
+            '[MARCA_TRANSPORTE]': form.marca_transporte.data,
+            '[PLACA_TRANSPORTE]': form.placa_transporte.data,
+            '[GUIA_REMISION_TRANSPORTE]': form.guia_remision_transporte.data,
         }
         app.logger.info("Replacements dictionary created")
 
