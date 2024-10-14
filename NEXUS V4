@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Logistics - Instrucciones de Embarque</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Tailwind CSS will be added here -->
+    <!-- Custom styles will be added here -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    
+</head>
+<body class="min-h-screen bg-white relative overflow-hidden">
+  
+
+    <svg class="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <pattern id="hexagons" width="50" height="43.4" patternUnits="userSpaceOnUse" patternTransform="scale(2)">
+                <path d="M25,21.7l-25,43.4l50,0l25,-43.4l-25,-43.4l-50,0l-25,43.4z" fill="none" stroke="#f0f0f0" stroke-width="1"/>
+            </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#hexagons)"/>
+        <path d="M0,900 Q400,850 800,900 T1600,900" fill="none" stroke="#ff0000" stroke-width="2"/>
+        <path d="M0,910 Q400,860 800,910 T1600,910" fill="none" stroke="#ff0000" stroke-width="2"/>
+    </svg>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+        <div class="flex justify-between items-start mb-12">
+            <div>
+                <h1 class="text-5xl font-extrabold italic">
+                    <span class="text-red-600">Conectamos</span>
+                    <span class="text-black">Continentes</span>
+                </h1>
+                <p class="mt-2 text-xl text-gray-600">Complete el formulario para generar su documento de instrucciones de embarque</p>
+            </div>
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de Nexus Logistics" class="h-48 -mt-8">
+        </div>
+
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden border-t-4 border-red-600">
+            <div class="bg-gradient-to-r from-red-600 to-red-700 text-white p-6">
+                <h2 class="text-2xl font-bold">Detalles del Documento</h2>
+            </div>
+            <div class="p-6">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <div class="tabs">
+                        <div class="tab-list grid grid-cols-3 gap-4 mb-6">
+                            <button type="button" class="tab-trigger bg-gray-200 text-white font-bold py-2 px-4 rounded" data-tab="exportador">Exportador</button>
+                            <button type="button" class="tab-trigger bg-gray-200 text-white font-bold py-2 px-4 rounded" data-tab="productor">Productor</button>
+                            <button type="button" class="tab-trigger bg-gray-200 text-white font-bold py-2 px-4 rounded" data-tab="transporte">Transporte</button>
+                        </div>
+                        <div class="tab-content" id="exportador">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {% for field in form if field.name.startswith('ruc_exportador') or field.name.startswith('razon_social_exportador') %}
+                                    <div class="space-y-2">
+                                        {{ field.label(class="block text-sm font-medium text-gray-700") }}
+                                        {{ field(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md") }}
+                                    </div>
+
+                                   
+                                {% endfor %}
+                                <div class="space-y-2">
+                                    {{ form.domicilio_fiscal_exportador.label(class="block text-sm font-medium text-gray-700") }}
+                                    {{ form.domicilio_fiscal_exportador(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md") }}
+                                </div>
+                                <div class="space-y-2">
+                                    {{ form.locales_anexos_exportador.label(class="block text-sm font-medium text-gray-700") }}
+                                    {{ form.locales_anexos_exportador(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md") }}
+                                </div>
+                                <!-- Add more Exportador fields as needed -->
+                            </div>
+                        </div>
+                        <div class="tab-content hidden" id="productor">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {% for field in form if field.name.startswith('ruc_productor') or field.name.startswith('razon_social_productor') or field.name.startswith('domicilio_fiscal_productor') or field.name.startswith('dni_productor') %}
+                                    <div class="space-y-2">
+                                        {{ field.label(class="block text-sm font-medium text-gray-700") }}
+                                        {{ field(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md") }}
+                                    </div>
+                                {% endfor %}
+                                <!-- Add more Productor fields as needed -->
+                            </div>
+                        </div>
+                        <div class="tab-content hidden" id="transporte">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {% for field in form if field.name.startswith('ruc_transporte') or field.name.startswith('razon_social_transporte') or field.name.startswith('domicilio_fiscal_transporte') %}
+                                    <div class="space-y-2">
+                                        {{ field.label(class="block text-sm font-medium text-gray-700") }}
+                                        {{ field(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md") }}
+                                    </div>
+                                {% endfor %}
+                                <!-- Add more Transporte fields as needed -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 text-center">
+                        {{ form.submit(class="bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 px-8 py-3 rounded-full text-lg font-semibold transition-all duration-300 transform hover:scale-105") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('.tab-trigger');
+        const contents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.dataset.tab;
+                tabs.forEach(t => t.classList.remove('bg-red-600', 'text-white'));
+                contents.forEach(c => c.classList.add('hidden'));
+                tab.classList.add('bg-red-600', 'text-white');
+                document.getElementById(target).classList.remove('hidden');
+            });
+        });
+
+        // Activate the first tab by default
+        tabs[0].click();
+    });
+    </script>
+</body>
+</html>
