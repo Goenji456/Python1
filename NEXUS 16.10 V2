@@ -11,6 +11,9 @@ import mimetypes
 from flask_cors import CORS
 from docx.oxml.shape import CT_Picture
 from docx.oxml.shared import qn
+import xml.etree.ElementTree as ET
+from docx import Document
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 
 # Get the directory of the current file (app.py)
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -308,6 +311,30 @@ def replace_text(doc, replacements):
                         if key in run.text:
                             run.text = run.text.replace(key, str(value))
 
+def replace_text_in_textboxes(doc, replacements):
+    part = doc.part
+    for rel in part.rels.values():
+        if rel.reltype != RT.IMAGE:
+            continue
+        try:
+            root = ET.fromstring(rel.target_part.blob)
+            textboxes = root.findall(".//{http://schemas.openxmlformats.org/drawingml/2006/main}txBody")
+            
+            for textbox in textboxes:
+                for paragraph in textbox.findall(".//{http://schemas.openxmlformats.org/drawingml/2006/main}p"):
+                    for run in paragraph.findall(".//{http://schemas.openxmlformats.org/drawingml/2006/main}r"):
+                        text_element = run.find(".//{http://schemas.openxmlformats.org/drawingml/2006/main}t")
+                        if text_element is not None:
+                            original_text = text_element.text
+                            for key, value in replacements.items():
+                                if key in original_text:
+                                    text_element.text = original_text.replace(key, str(value))
+                                    app.logger.info(f"Replaced '{key}' with '{value}' in textbox")
+            
+            rel.target_part.blob = ET.tostring(root)
+        except ET.ParseError:
+            app.logger.warning(f"Could not parse XML for relationship {rel.rId}")
+
 def generar_documento_guia_aerea(form):
     try:
         template_path = os.path.join(basedir, 'documents', 'guia aerea.docx')
@@ -316,6 +343,10 @@ def generar_documento_guia_aerea(form):
         doc = Document(template_path)
         app.logger.info(f"Document loaded. Paragraphs: {len(doc.paragraphs)}, Tables: {len(doc.tables)}, Shapes: {len(doc.inline_shapes)}")
         
+        # Log the first few paragraphs
+        for i, para in enumerate(doc.paragraphs[:5]):
+            app.logger.info(f"Paragraph {i}: {para.text[:50]}...")
+
         destino = form.destino_exportador.data
         app.logger.info(f"Destino value: {destino}")
         
@@ -369,7 +400,17 @@ def generar_documento_guia_aerea(form):
             '[aerolinea_nombre]': form.aerolinea_exportador.data or '[EMPTY]',
         }
 
+        app.logger.info(f"Replacements dictionary: {replacements}")
+        
+        # Perform replacements in regular paragraphs
         replace_text(doc, replacements)
+        
+        # Perform replacements in textboxes
+        replace_text_in_textboxes(doc, replacements)
+        
+        # Log the first few paragraphs after replacement
+        for i, para in enumerate(doc.paragraphs[:5]):
+            app.logger.info(f"Paragraph {i} after replacement: {para.text[:50]}...")
 
         app.logger.info("Guia Aerea Document generation completed")
         return doc
@@ -425,6 +466,10 @@ def generar_guia_aerea():
             file_stream.seek(0)
             app.logger.info(f"Generated Guía Aérea file size: {size} bytes")
             
+            if size == 0:
+                app.logger.error("Generated file is empty")
+                return jsonify({"error": "Generated file is empty"}), 500
+            
             return send_file(
                 file_stream,
                 as_attachment=True,
@@ -441,28 +486,35 @@ def generar_guia_aerea():
 def check_template_file():
     template_path = os.path.join(basedir, 'documents', 'guia aerea.docx')
     
-    # Check if file exists
     if not os.path.exists(template_path):
         app.logger.error(f"Template file does not exist: {template_path}")
         return False
     
-    # Check if file is not empty
-    if os.path.getsize(template_path) == 0:
-        app.logger.error(f"Template file is empty: {template_path}")
-        return False
-    
-    # Check if file can be opened as a Word document
     try:
         doc = Document(template_path)
-        if len(doc.paragraphs) == 0 and len(doc.tables) == 0:
-            app.logger.error(f"Template file has no content: {template_path}")
-            return False
+        app.logger.info(f"Template file loaded. Paragraphs: {len(doc.paragraphs)}, Tables: {len(doc.tables)}, Shapes: {len(doc.inline_shapes)}")
+        
+        # Check for content in paragraphs
+        for i, para in enumerate(doc.paragraphs):
+            if para.text.strip():
+                app.logger.info(f"Paragraph {i}: {para.text[:50]}...")  # Log first 50 chars of non-empty paragraphs
+        
+        # Check for placeholders
+        placeholders = ['[Consignee]', '[Domicilio_Fiscal_Consignee_Exportador]', '[awb]', '[NOTIFY_2]', '[Peso]']
+        for placeholder in placeholders:
+            found = False
+            for para in doc.paragraphs:
+                if placeholder in para.text:
+                    found = True
+                    app.logger.info(f"Found placeholder: {placeholder}")
+                    break
+            if not found:
+                app.logger.warning(f"Placeholder not found: {placeholder}")
+        
+        return True
     except Exception as e:
-        app.logger.error(f"Error opening template file: {template_path}. Error: {str(e)}")
+        app.logger.error(f"Error checking template file: {str(e)}")
         return False
-    
-    app.logger.info(f"Template file is valid: {template_path}")
-    return True
 
 if __name__ == '__main__':
     print(f"Flask app running on http://{app.config['SERVER_NAME'] or 'localhost'}:{app.config['PORT'] if 'PORT' in app.config else 5000}")
