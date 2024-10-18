@@ -110,6 +110,7 @@
                                                    field.name.startswith('guia_destino_exportador') or 
                                                    field.name.startswith('guia_aerolinea_exportador') or 
                                                    field.name.startswith('guia_aerolinea_rs') or 
+                                    
                                                    field.name.startswith('guia_ruc') %}
                                                 <div class="space-y-2">
                                                     {{ field.label(class="block text-sm font-medium text-gray-700") }}
@@ -129,6 +130,10 @@
                                             <div class="space-y-2">
                                                 <label class="block text-sm font-medium text-gray-700">CIUDAD</label>
                                                 <input type="text" id="guia_ciudad" name="guia_ciudad" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300 bg-yellow-50">
+                                            </div>
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="guia_fecha_de_embarque">Fecha de Embarque</label>
+                                                {{ form.guia_fecha_de_embarque(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300 bg-yellow-50", type="date") }}
                                             </div>
                                             <div class="space-y-2">
                                                 <label class="block text-sm font-medium text-gray-700">Aeropuerto de destino</label>
@@ -174,6 +179,25 @@
                                             </div>
                                             <input type="hidden" id="guia_int" name="guia_int" value="">
                                             <input type="hidden" id="guia_dore" name="guia_dore" value="">
+                                           
+
+
+                                            
+
+                                            <!-- In the Guía Aérea section -->
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="guia_fecha_ingreso">Fecha de Ingreso (Guía Aérea)</label>
+                                                <input type="date" id="guia_fecha_ingreso" name="guia_fecha_ingreso" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300 bg-yellow-50">
+                                            </div>
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="guia_ingreso_dia">DIA ingreso</label>
+                                                <input type="text" id="guia_ingreso_dia" name="guia_ingreso_dia" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300 bg-yellow-50" readonly>
+                                            </div>
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="guia_ingreso_month">MONTH ingreso</label>
+                                                <input type="text" id="guia_ingreso_month" name="guia_ingreso_month" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300 bg-yellow-50" readonly>
+                                            </div>
+                                            
                                         </div>
                                     </div>
                                 </div>
@@ -196,6 +220,54 @@
     </div>
 
     <script>
+     function updateDateIngresoFields() {
+         const fechaIngresoExportadorField = document.getElementById('fecha_de_ingreso_exportador');
+         const fechaIngresoGuiaField = document.getElementById('guia_fecha_ingreso');
+         const diaIngresoField = document.getElementById('guia_ingreso_dia');
+         const monthIngresoField = document.getElementById('guia_ingreso_month');
+
+         function updateIngresoFields(inputDate) {
+             if (!inputDate) return;
+
+             // Parse the date without converting to UTC
+             const [year, month, day] = inputDate.split('-').map(Number);
+             const date = new Date(year, month - 1, day);
+             
+             // Update DIA (use getDate to get the correct day)
+             diaIngresoField.value = date.getDate().toString().padStart(2, '0');
+
+             // Update MONTH
+             const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+             monthIngresoField.value = months[date.getMonth()];
+
+             console.log('Updated DIA ingreso:', diaIngresoField.value);
+             console.log('Updated MONTH ingreso:', monthIngresoField.value);
+         }
+
+         fechaIngresoExportadorField.addEventListener('change', function() {
+             updateIngresoFields(this.value);
+             fechaIngresoGuiaField.value = this.value; // Sync with Guía Aérea field
+         });
+
+         fechaIngresoGuiaField.addEventListener('change', function() {
+             updateIngresoFields(this.value);
+             fechaIngresoExportadorField.value = this.value; // Sync with Exportador field
+         });
+
+         // Initial update
+         if (fechaIngresoExportadorField.value) {
+             updateIngresoFields(fechaIngresoExportadorField.value);
+         } else if (fechaIngresoGuiaField.value) {
+             updateIngresoFields(fechaIngresoGuiaField.value);
+         }
+     }
+
+     // Make sure this function is called when the DOM is loaded
+     document.addEventListener('DOMContentLoaded', function() {
+         updateDateIngresoFields();
+         // ... other function calls ...
+     });
+
     document.addEventListener('DOMContentLoaded', function() {
         // Tab functionality
         const tabs = document.querySelectorAll('.tab-trigger');
@@ -318,7 +390,8 @@
         setupAutoFill('consignee_importador_exportador', 'guia_consignee_importador_exportador');
         setupAutoFill('email_consignee_exportador', 'guia_email_consignee_exportador');
         setupAutoFill('telefono_consignee_exportador', 'guia_telefono_consignee_exportador');
-
+        setupAutoFill('fecha_de_embarque', 'guia_fecha_de_embarque');
+        setupAutoFill('fecha_de_ingreso_exportador', 'guia_fecha_ingreso');
         // Combine AWB parts
         function combineAWB() {
             const part1 = document.getElementById('awb_part1').value;
@@ -462,42 +535,54 @@
         updateFlights();
 
         function updateDateFields() {
-            const fechaEmbarqueField = document.getElementById('fecha_de_embarque_exportador');
+            const fechaEmbarqueExportadorField = document.getElementById('fecha_de_embarque_exportador');
+            const fechaEmbarqueGuiaField = document.getElementById('guia_fecha_de_embarque');
             const diaField = document.getElementById('guia_dia');
             const monthField = document.getElementById('guia_month');
             const fechaField = document.getElementById('guia_fecha');
 
-            if (fechaEmbarqueField && diaField && monthField && fechaField) {
-                fechaEmbarqueField.addEventListener('change', function() {
-                    const inputDate = this.value; // This will be in the format "YYYY-MM-DD"
-                    const [year, month, day] = inputDate.split('-').map(Number);
-                    
-                    // Directly use the day from the input
-                    diaField.value = day;
+            function updateFields(inputDate) {
+                if (!inputDate) return;
 
-                    // MONTH
-                    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-                    monthField.value = months[month - 1]; // Subtract 1 because months are 0-indexed in JavaScript
+                // Create a date object using UTC to avoid timezone issues
+                const [year, month, day] = inputDate.split('-').map(Number);
+                const date = new Date(Date.UTC(year, month - 1, day));
+                
+                // Update DIA (use getUTCDate to get the correct day)
+                diaField.value = date.getUTCDate().toString().padStart(2, '0');
 
-                    // FECHA
-                    const monthNames = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
-                    fechaField.value = `${day}-${monthNames[month - 1]}-${year}`;
+                // Update MONTH
+                const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                monthField.value = months[date.getUTCMonth()];
 
-                    console.log('Updated DIA:', diaField.value);
-                    console.log('Updated MONTH:', monthField.value);
-                    console.log('Updated FECHA:', fechaField.value);
-                });
+                // Update FECHA
+                const monthNames = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
+                fechaField.value = `${diaField.value}-${monthNames[date.getUTCMonth()]}-${date.getUTCFullYear()}`;
 
-                // Trigger the event on page load if there's an initial value
-                const event = new Event('change');
-                fechaEmbarqueField.dispatchEvent(event);
-            } else {
-                console.error('One or more date fields not found');
+                console.log('Updated DIA:', diaField.value);
+                console.log('Updated MONTH:', monthField.value);
+                console.log('Updated FECHA:', fechaField.value);
+            }
+
+            // Update when Exportador fecha de embarque changes
+            fechaEmbarqueExportadorField.addEventListener('change', function() {
+                updateFields(this.value);
+                fechaEmbarqueGuiaField.value = this.value; // Sync with Guía Aérea field
+            });
+
+            // Update when Guía Aérea fecha de embarque changes
+            fechaEmbarqueGuiaField.addEventListener('change', function() {
+                updateFields(this.value);
+                fechaEmbarqueExportadorField.value = this.value; // Sync with Exportador field
+            });
+
+            // Initial update
+            if (fechaEmbarqueExportadorField.value) {
+                updateFields(fechaEmbarqueExportadorField.value);
+            } else if (fechaEmbarqueGuiaField.value) {
+                updateFields(fechaEmbarqueGuiaField.value);
             }
         }
-
-        // Call the function to set up the date field updates
-        updateDateFields();
 
         function updateAerolineaFields() {
             const aerolineaField = document.getElementById('guia_aerolinea_exportador');
@@ -529,9 +614,6 @@
                 console.error('One or more aerolinea fields not found');
             }
         }
-
-        // Call the function to set up the aerolinea field updates
-        updateAerolineaFields();
 
         function updateDore() {
             const destinoField = document.getElementById('guia_destino_exportador');
@@ -615,6 +697,13 @@
                 console.error('Error:', error);
             });
         });
+
+        // Call all the update functions
+        updateCiudadAndAeropuerto();
+        updateDateFields();
+        updateAerolineaFields();
+        updateIntField();
+        updateDateFieldsFromIngreso();  // Add this line
     });
     </script>
 
