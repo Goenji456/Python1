@@ -179,6 +179,7 @@
                                             <input type="hidden" id="guia_int" name="guia_int" value="">
                                             <input type="hidden" id="guia_dore" name="guia_dore" value="">
                                             <input type="hidden" id="guia_fecha" name="guia_fecha">
+                                            <input type="hidden" id="guia_ae" name="guia_ae">
                                            
 
 
@@ -355,6 +356,12 @@
             guiaAereaButton.addEventListener('click', function(event) {
                 event.preventDefault();
                 console.log('Guía Aérea button clicked');
+                
+                // Update all fields before submission
+                updateIntField();
+                updateAerolineaFields();
+                updateCombinedAWB();
+                
                 const formData = new FormData(envioForm);
                 
                 // Log form data for debugging
@@ -624,23 +631,29 @@
             const aerolineaField = document.getElementById('guia_aerolinea_exportador');
             const aerolineaRsField = document.getElementById('guia_aerolinea_rs');
             const rucField = document.getElementById('guia_ruc');
+            const aeField = document.getElementById('guia_ae');
 
-            if (aerolineaField && aerolineaRsField && rucField) {
+            if (aerolineaField && aerolineaRsField && rucField && aeField) {
                 aerolineaField.addEventListener('change', function() {
                     const aerolinea = this.value;
+                    console.log('Selected Aerolinea:', aerolinea);
                     if (aerolinea === 'KLM CARGO') {
                         aerolineaRsField.value = 'KLM CIA. REAL HOLANDESA DE AVIACIÓN';
                         rucField.value = '20100103738';
+                        aeField.value = 'KL';
                     } else if (aerolinea === 'SOCIETE AIR FRANCE') {
                         aerolineaRsField.value = 'SOCIETE AIR FRANCE SUCURSAL EN EL PERU';
                         rucField.value = '20100142041';
+                        aeField.value = 'AF';
                     } else {
                         aerolineaRsField.value = '';
                         rucField.value = '';
+                        aeField.value = '';
                     }
 
                     console.log('Updated AEROLINEA_RS:', aerolineaRsField.value);
                     console.log('Updated RUC AEROLINEA:', rucField.value);
+                    console.log('Updated AE:', aeField.value);
                 });
 
                 // Trigger the event on page load if there's an initial value
@@ -648,6 +661,10 @@
                 aerolineaField.dispatchEvent(event);
             } else {
                 console.error('One or more aerolinea fields not found');
+                console.log('aerolineaField:', aerolineaField);
+                console.log('aerolineaRsField:', aerolineaRsField);
+                console.log('rucField:', rucField);
+                console.log('aeField:', aeField);
             }
         }
 
