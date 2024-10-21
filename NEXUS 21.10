@@ -154,6 +154,7 @@ class FormularioEnvio(FlaskForm):
     guia_ingreso_dia = StringField('DIA ingreso', validators=[Optional()])
     guia_ingreso_month = StringField('MONTH ingreso', validators=[Optional()])
     guia_fecha_ingreso = DateField('Fecha de Ingreso', format='%Y-%m-%d', validators=[Optional()])
+    guia_ae = StringField('AE', validators=[Optional()])
 
     submit = SubmitField('Enviar')
 
@@ -489,6 +490,7 @@ def generar_documento_guia_aerea(form):
             'DORE_1': form.guia_dore.data or '',
             'MONTH_1_1': form.guia_month.data or '',
             'MONTH_1_2': form.guia_ingreso_month.data or '',
+            'ae_1': form.guia_ae.data or '',
         }
 
         # Add copies 2-6
@@ -526,6 +528,7 @@ def generar_documento_guia_aerea(form):
                 f'MONTH_{i}_1': form.guia_month.data or '',
                 f'MONTH_{i}_2': form.guia_ingreso_month.data or '',
                 f'DORE_{i}': form.guia_dore.data or '',
+                f'ae_{i}': form.guia_ae.data or '',
             })
 
         for bookmark, value in replacements.items():
@@ -551,25 +554,19 @@ def generar_documento_guia_aerea(form):
 @app.route('/generar_guia_aerea', methods=['POST'])
 def generar_guia_aerea():
     form = FormularioEnvio(request.form)
-    app.logger.info(f"Form data received: {request.form}")
     if form.validate():
-        app.logger.info("Form validation successful")
         try:
             output = generar_documento_guia_aerea(form)
-            app.logger.info("DOCX document generated successfully")
-            
             return send_file(
                 output,
                 as_attachment=True,
                 download_name='guia_aerea.docx',
-                mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml/document'
+                mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
             )
         except Exception as e:
             app.logger.error(f"Error generating Guía Aérea DOCX: {str(e)}")
-            app.logger.error(traceback.format_exc())
             return jsonify({"error": str(e)}), 500
     else:
-        app.logger.error(f"Form validation failed. Errors: {form.errors}")
         return jsonify({"error": "Form validation failed", "details": form.errors}), 400
 
 @app.route('/api/generar-documento-envio', methods=['POST'])
@@ -707,6 +704,27 @@ def test():
 if __name__ == '__main__':
     print(f"Flask app running on http://{app.config['SERVER_NAME'] or 'localhost'}:{app.config['PORT'] if 'PORT' in app.config else 5000}")
     app.run(debug=True)
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
