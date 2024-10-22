@@ -673,25 +673,76 @@
             const doreField = document.getElementById('guia_dore');
 
             if (destinoField && doreField) {
-                const destino = destinoField.value.toLowerCase();
-                doreField.value = destino === 'india' ? 'DORE' : '';
+                const destino = destinoField.value.toLowerCase().trim();
+                console.log('Current destino value:', destino);
+                
+                if (destino === 'india') {
+                    doreField.value = 'DORE';
+                } else {
+                    doreField.value = '';
+                }
 
                 console.log('Updated DORE:', doreField.value);
             } else {
                 console.error('DESTINO or DORE field not found');
+                console.log('destinoField:', destinoField);
+                console.log('doreField:', doreField);
             }
         }
 
         // Add event listener to update DORE when DESTINO changes
-        const destinoField = document.getElementById('guia_destino_exportador');
-        if (destinoField) {
-            destinoField.addEventListener('input', updateDore);
-        } else {
-            console.error('DESTINO field not found');
+        function setupDoreListeners() {
+            const destinoField = document.getElementById('guia_destino_exportador');
+            const destinoExportadorField = document.getElementById('destino_exportador');
+
+            if (destinoField) {
+                destinoField.addEventListener('input', updateDore);
+                destinoField.addEventListener('change', updateDore);
+                console.log('Event listeners added to guia_destino_exportador field');
+            } else {
+                console.error('guia_destino_exportador field not found');
+            }
+
+            if (destinoExportadorField) {
+                destinoExportadorField.addEventListener('input', function() {
+                    destinoField.value = this.value;
+                    updateDore();
+                });
+                console.log('Event listener added to destino_exportador field');
+            } else {
+                console.error('destino_exportador field not found');
+            }
+
+            // Call updateDore initially to set value on page load
+            updateDore();
         }
 
-        // Call updateDore initially to set value on page load
-        updateDore();
+        // Call setupDoreListeners when the document is loaded
+        document.addEventListener('DOMContentLoaded', setupDoreListeners);
+
+        // Update the updateAllGuiaAereaFields function
+        function updateAllGuiaAereaFields() {
+            updateCiudadAndAeropuerto();
+            updateDateFields();
+            updateAerolineaFields();
+            updateIntField();
+            updateDore();  // Add this line
+            updateDateFieldsFromIngreso();
+        }
+
+        // Make sure to call updateAllGuiaAereaFields when the Guía Aérea tab is activated
+        document.querySelectorAll('.tab-trigger').forEach(trigger => {
+            trigger.addEventListener('click', function() {
+                if (this.getAttribute('data-tab') === 'guia-aerea') {
+                    updateAllGuiaAereaFields();
+                }
+            });
+        });
+
+        // Call updateAllGuiaAereaFields on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAllGuiaAereaFields();
+        });
 
         function updateIntField() {
             const aerolineaField = document.getElementById('guia_aerolinea_exportador');
@@ -757,6 +808,30 @@
         updateAerolineaFields();
         updateIntField();
         updateDateFieldsFromIngreso();  // Add this line
+
+        // Add this function to update all Guía Aérea fields
+        function updateAllGuiaAereaFields() {
+            updateCiudadAndAeropuerto();
+            updateDateFields();
+            updateAerolineaFields();
+            updateIntField();
+            updateDore();
+            updateDateFieldsFromIngreso();
+        }
+
+        // Call this function when the Guía Aérea tab is activated
+        document.querySelectorAll('.tab-trigger').forEach(trigger => {
+            trigger.addEventListener('click', function() {
+                if (this.getAttribute('data-tab') === 'guia-aerea') {
+                    updateAllGuiaAereaFields();
+                }
+            });
+        });
+
+        // Call all update functions on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAllGuiaAereaFields();
+        });
     });
     </script>
     <style>
