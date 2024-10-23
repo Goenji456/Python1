@@ -68,9 +68,9 @@
                                             <div class="space-y-2">
                                                 <label class="block text-sm font-medium text-gray-700">Guía Aérea (AWB)</label>
                                                 <div class="flex space-x-2">
-                                                    <input id="awb_part1" name="awb_part1" type="text" maxlength="3" placeholder="000" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
-                                                    <input id="awb_part2" name="awb_part2" type="text" maxlength="4" placeholder="0000" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
-                                                    <input id="awb_part3" name="awb_part3" type="text" maxlength="4" placeholder="0000" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                                    {{ form.awb_part1(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300", maxlength="3", placeholder="000") }}
+                                                    {{ form.awb_part2(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300", maxlength="4", placeholder="0000") }}
+                                                    {{ form.awb_part3(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300", maxlength="4", placeholder="0000") }}
                                                 </div>
                                                 {{ form.guia_aerea_exportador(type="hidden") }}
                                                 <div id="combined_awb" class="mt-2 text-sm text-gray-600"></div>
@@ -756,56 +756,131 @@
             });
         }
 
-        // AWB autofill function
-        function setupAWBAutoFill() {
-            console.log('Setting up AWB Auto Fill');
-            const aerolineaField = document.getElementById('aerolinea_exportador') || document.getElementById('guia_aerolinea_exportador');
-            const awbPart1 = document.getElementById('awb_part1');
-            const guiaAwbI = document.getElementById('guia_awb_i');
-
-            console.log('Aerolinea field:', aerolineaField);
-            console.log('AWB Part 1 field:', awbPart1);
-            console.log('Guia AWB I field:', guiaAwbI);
-
-            if (!aerolineaField) {
-                console.error('Aerolinea field not found');
-                return;
+        function updateCombinedAWB() {
+            const awbI = document.getElementById('guia_awb_i').value;
+            let awbII = document.getElementById('guia_awb_ii').value;
+            const aerolinea = document.getElementById('guia_aerolinea_exportador').value;
+            
+            let prefix = awbI;
+            if (aerolinea === 'KLM CARGO' && !prefix) {
+                prefix = '074';
+            } else if (aerolinea === 'SOCIETE AIR FRANCE' && !prefix) {
+                prefix = '057';
             }
-
-            function updateAWBPart1() {
-                console.log('Updating AWB Part 1 for airline:', aerolineaField.value);
-                let awbCode = '';
-                if (aerolineaField.value === 'KLM CARGO') {
-                    awbCode = '074';
-                } else if (aerolineaField.value === 'SOCIETE AIR FRANCE') {
-                    awbCode = '057';
-                }
-                
-                if (awbPart1) {
-                    awbPart1.value = awbCode;
-                    console.log('Updated awb_part1:', awbCode);
-                } else {
-                    console.error('awb_part1 field not found');
-                }
-                
-                if (guiaAwbI) {
-                    guiaAwbI.value = awbCode;
-                    console.log('Updated guia_awb_i:', awbCode);
-                } else {
-                    console.error('guia_awb_i field not found');
-                }
+            
+            // Remove leading zeros from awbII
+            awbII = awbII.replace(/^0+/, '');
+            
+            // Only pad with zeros if there's an actual value
+            const paddedAwbII = awbII ? awbII.padStart(8, '0') : '';
+            
+            document.getElementById('guia_awb_i').value = prefix;
+            document.getElementById('guia_awb_ii').value = awbII; // Use non-padded value here
+            
+            // Only show combined AWB if both parts are present
+            if (prefix && paddedAwbII) {
+                document.getElementById('guia_awb').value = `${prefix}-${paddedAwbII}`;
+            } else {
+                document.getElementById('guia_awb').value = '';
             }
-
-            aerolineaField.addEventListener('change', updateAWBPart1);
-            console.log('Added change event listener to aerolinea field');
-            updateAWBPart1(); // Initial update
+            
+            console.log('Updated Guía Aérea AWB:', document.getElementById('guia_awb').value);
         }
 
-        // Make sure this function is called when the DOM is loaded
+        function initializeAWBFields() {
+            const awbIIField = document.getElementById('guia_awb_ii');
+            awbIIField.value = ''; // Clear any default value
+            updateCombinedAWB(); // Update combined AWB
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM fully loaded, calling setupAWBAutoFill');
-            setupAWBAutoFill();
+            initializeAWBFields();
+            
+            const awbIIField = document.getElementById('guia_awb_ii');
+            awbIIField.addEventListener('input', updateCombinedAWB);
+            
+            const awbIField = document.getElementById('guia_awb_i');
+            awbIField.addEventListener('input', updateCombinedAWB);
+            
+            const aerolineaField = document.getElementById('guia_aerolinea_exportador');
+            aerolineaField.addEventListener('change', updateCombinedAWB);
         });
+
+        function combineAWB() {
+            const awbPart1 = document.getElementById('awb_part1').value;
+            const awbPart2 = document.getElementById('awb_part2').value;
+            const awbPart3 = document.getElementById('awb_part3').value;
+            
+            document.getElementById('guia_awb_i').value = awbPart1;
+            document.getElementById('guia_awb_ii').value = awbPart2 + awbPart3;
+            
+            updateCombinedAWB();
+        }
+
+        // Add event listeners to AWB part inputs
+        ['awb_part1', 'awb_part2', 'awb_part3'].forEach(id => {
+            document.getElementById(id).addEventListener('input', combineAWB);
+        });
+
+        // Add event listeners to editable AWB fields in Guía Aérea
+        ['guia_awb_i', 'guia_awb_ii'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateCombinedAWB);
+        });
+
+        // Add event listener to aerolinea field
+        document.getElementById('guia_aerolinea_exportador').addEventListener('change', updateCombinedAWB);
+
+        // Modify your existing setupAWBAutoFill function
+        function setupAWBAutoFill() {
+            const aerolineaField = document.getElementById('aerolinea_exportador');
+            const guiaAerolineaField = document.getElementById('guia_aerolinea_exportador');
+            const awbPart1 = document.getElementById('awb_part1');
+
+            function updateAWBPart1(aerolinea) {
+                if (aerolinea === 'SOCIETE AIR FRANCE') {
+                    awbPart1.value = '057';
+                } else if (aerolinea === 'KLM CARGO') {
+                    awbPart1.value = '074';
+                } else {
+                    awbPart1.value = '';
+                }
+                combineAWB(); // This will trigger updateCombinedAWB as well
+            }
+
+            function syncAerolineaFields(sourceField, targetField) {
+                targetField.value = sourceField.value;
+                updateAWBPart1(sourceField.value);
+            }
+
+            if (aerolineaField && guiaAerolineaField && awbPart1) {
+                aerolineaField.addEventListener('change', function() {
+                    syncAerolineaFields(aerolineaField, guiaAerolineaField);
+                });
+                guiaAerolineaField.addEventListener('change', function() {
+                    syncAerolineaFields(guiaAerolineaField, aerolineaField);
+                });
+            } else {
+                console.error('One or more AWB input fields or aerolinea fields not found');
+            }
+
+            // Initial update
+            updateAWBPart1(aerolineaField.value || guiaAerolineaField.value);
+        }
+
+        // Call the setupAWBAutoFill function
+        setupAWBAutoFill();
+
+        // Add this function to initialize the AWB fields
+        function initializeAWBFields() {
+            const awbIIField = document.getElementById('guia_awb_ii');
+            awbIIField.value = ''; // Clear any default value
+            updateCombinedAWB(); // Update combined AWB
+        }
+
+        // Call initializeAWBFields when the page loads
+        document.addEventListener('DOMContentLoaded', initializeAWBFields);
+
+        // ... rest of your existing code ...
     });
     </script>
     <style>
