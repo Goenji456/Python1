@@ -152,7 +152,7 @@
                                             </div>
                                             <div class="space-y-2">
                                                 <label class="block text-sm font-medium text-gray-700">AWB II</label>
-                                                <input type="text" id="guia_awb_ii" name="guia_awb_ii" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300 bg-yellow-50">
+                                                <input type="text" id="guia_awb_ii" name="guia_awb_ii" maxlength="8" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300 bg-yellow-50">
                                             </div>
                                             <div class="space-y-2">
                                                 <label class="block text-sm font-medium text-gray-700">AWB (Combined)</label>
@@ -789,7 +789,9 @@
 
         function initializeAWBFields() {
             const awbIIField = document.getElementById('guia_awb_ii');
-            awbIIField.value = ''; // Clear any default value
+            if (awbIIField) {
+                awbIIField.value = ''; // Clear any default value
+            }
             updateCombinedAWB(); // Update combined AWB
         }
 
@@ -873,7 +875,9 @@
         // Add this function to initialize the AWB fields
         function initializeAWBFields() {
             const awbIIField = document.getElementById('guia_awb_ii');
-            awbIIField.value = ''; // Clear any default value
+            if (awbIIField) {
+                awbIIField.value = ''; // Clear any default value
+            }
             updateCombinedAWB(); // Update combined AWB
         }
 
