@@ -1,0 +1,111 @@
+import os
+import agentql
+from playwright.sync_api import sync_playwright
+from pyairtable import api
+from dotenv import load_dotenv 
+
+load_dotenv()
+
+
+RUC = "20348858182"
+
+INITIAL_URL = "https://e-consultaruc.sunat.gob.pe/cl-ti-itmrconsruc/FrameCriterioBusquedaWeb.jsp"
+
+RUC_INPUT_QUERY = """
+{
+    login_form {
+        RUC_input
+        buscar_btn
+    }
+}
+"""
+
+EMPRESA_DATA_QUERY = """
+
+{
+  empresa_data {
+    ruc
+    razon_social(located on the same line as RUC, separated by a hyphen)
+    estado_contribuyente
+    condicion_contribuyente
+    domicilio_fiscal
+    actividad_comercio_exterior
+  }
+}
+"""
+
+DEUDA_PAGE_QUERY = """
+{
+    pagination {
+            deudacoactiva_page_btn}
+
+
+
+}
+
+"""
+
+DEUDA_COACTIVA_QUERY = """
+{
+    deuda_coactiva {
+        resultado_busqueda(text="Resultado de la Búsqueda")
+        mensaje_resultado(below: resultado_busqueda) {
+            text
+        }
+    }
+}
+"""
+
+
+with sync_playwright() as playwright, playwright.chromium.launch(
+    headless=False,
+    channel="chrome"  # Use installed Chrome instead of downloaded Chromium
+) as browser:
+
+    page = agentql.wrap(browser.new_page())
+
+    page.goto(INITIAL_URL)
+
+    
+
+    response= page.query_elements(RUC_INPUT_QUERY)
+    page.wait_for_timeout(2000)
+    response.login_form.RUC_input.fill(RUC)
+    
+    response.login_form.buscar_btn.click()
+
+    page.wait_for_page_ready_state()
+    
+
+    empresa_data_response= page.query_elements(EMPRESA_DATA_QUERY)
+    empresa_data= empresa_data_response.empresa_data
+    empresa_data_info=empresa_data.to_data()
+
+    print(empresa_data_info)
+
+    paginations = page.query_elements(DEUDA_PAGE_QUERY)
+    deudacoactiva_page_btn= paginations.pagination.deudacoactiva_page_btn
+
+
+    deudacoactiva_page_btn.click()
+
+    page.wait_for_page_ready_state()
+
+    deuda_coactiva_response=page.query_elements(DEUDA_COACTIVA_QUERY)
+    deuda_coactiva=deuda_coactiva_response.deuda_coactiva
+    mensaje = deuda_coactiva_response.deuda_coactiva.mensaje_resultado.text
+    
+    if mensaje is None:
+        print("Sin deuda")
+    else:
+        print("Tiene deuda Coactiva")
+  
+
+
+
+    
+
+
+
+
+
