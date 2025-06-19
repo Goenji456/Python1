@@ -1,0 +1,139 @@
+import os
+from pyairtable import Api, Base, Table
+from typing import Dict, List, Optional, Any
+import logging
+
+class AirtableClient:
+    def __init__(self):
+        self.api_key = os.getenv("AIRTABLE_API_KEY")
+        self.base_id = os.getenv("AIRTABLE_BASE_ID")
+        
+        if not self.api_key or not self.base_id:
+            raise ValueError("AIRTABLE_API_KEY and AIRTABLE_BASE_ID must be set in the .env file")
+        
+        self.api = Api(self.api_key)
+        self.base = self.api.base(self.base_id)
+        
+        # Solo configuramos la tabla de perfiles de empresa
+        self.company_profiles_table = Table(self.api_key, self.base_id, "Company Profiles")
+        
+        logging.info("Airtable client initialized successfully")
+    
+    def get_company_profile_by_ruc(self, ruc: str) -> Optional[Dict]:
+        """
+        Busca un perfil de empresa por RUC
+        """
+        try:
+            records = self.company_profiles_table.all(formula=f"{{RUC}} = '{ruc}'")
+            if records:
+                # Convertir el formato de Airtable al formato que espera la aplicación
+                record = records[0]
+                return self._format_record(record)
+            return None
+        except Exception as e:
+            logging.error(f"Error getting company profile: {str(e)}")
+            raise
+
+    def search_companies(self, search_term: str) -> List[Dict]:
+        """
+        Busca empresas por razón social o RUC
+        """
+        try:
+            # Limpiar y preparar el término de búsqueda
+            search_term = search_term.strip().upper()
+            if not search_term:
+                return []
+
+            # Crear una fórmula que busque coincidencias
+            formula = f"OR(FIND(UPPER('{search_term}'), UPPER({{Razon Social}})) > 0, FIND(UPPER('{search_term}'), UPPER({{RUC}})) > 0)"
+            
+            # Realizar la búsqueda en Airtable
+            records = self.company_profiles_table.all(formula=formula)
+            
+            # Convertir los registros a un formato más amigable
+            results = []
+            for record in records:
+                fields = record['fields']
+                print(f"Raw fields from Airtable: {fields}")  # Debug log
+                company = {
+                    'ruc': fields.get('RUC', ''),
+                    'razon_social': fields.get('Razon Social', ''),
+                    'domicilio_fiscal': fields.get('Domicilio Fiscal', ''),
+                    'locales_anexos': fields.get('Locales Anexos', ''),
+                    'objeto_actividad_economica': fields.get('Objeto Actividad Economica', ''),
+                    'representante_legal': fields.get('Representante Legal', ''),
+                    'dni_representante': fields.get('DNI Representante', ''),
+                    'cargo_representante': fields.get('Cargo', ''),
+                    'telefono': fields.get('Telefono', ''),
+                    'origen_fondos': fields.get('Origen de los Fondos', '')
+                }
+                print(f"Mapped company data: {company}")  # Debug log
+                results.append(company)
+            
+            print(f"Found {len(results)} companies matching '{search_term}'")
+            return results
+            
+        except Exception as e:
+            print(f"Error searching companies: {str(e)}")
+            raise
+
+    def _format_record(self, record: Dict) -> Dict:
+        """
+        Formatea un registro de Airtable al formato que espera la aplicación
+        """
+        return {
+            'ruc': record['fields'].get('RUC', ''),
+            'razon_social': record['fields'].get('Razon Social', ''),
+            'domicilio_fiscal': record['fields'].get('Domicilio Fiscal', ''),
+            'locales_anexos': record['fields'].get('Locales Anexos', ''),
+            'objeto_actividad_economica': record['fields'].get('Objeto Actividad Economica', ''),
+            'representante_legal': record['fields'].get('Representante Legal', ''),
+            'dni_representante': record['fields'].get('DNI Representante', ''),
+            'cargo_representante': record['fields'].get('Cargo', ''),
+            'telefono': record['fields'].get('Telefono', ''),
+            'origen_fondos': record['fields'].get('Origen de los Fondos', '')
+        }
+
+    def create_or_update_company_profile(self, data: Dict) -> Dict:
+        """
+        Crea o actualiza un perfil de empresa
+        """
+        try:
+            # Buscar si ya existe un registro con el mismo RUC
+            existing_records = self.company_profiles_table.all(formula=f"{{RUC}} = '{data['ruc']}'")
+            
+            # Preparar los datos para Airtable
+            airtable_data = {
+                'RUC': data['ruc'],
+                'Razon Social': data['razon_social'],
+                'Domicilio Fiscal': data['domicilio_fiscal'],
+                'Locales Anexos': data['locales_anexos'],
+                'Objeto Actividad Economica': data['objeto_actividad_economica'],
+                'Representante Legal': data['representante_legal'],
+                'DNI Representante': data['dni_representante'],
+                'Cargo': data['cargo_representante'],
+                'Telefono': data['telefono'],
+                'Origen de los Fondos': data.get('origen_fondos', '')
+            }
+            
+            if existing_records:
+                # Actualizar registro existente
+                record_id = existing_records[0]['id']
+                return self.company_profiles_table.update(record_id, airtable_data)
+            else:
+                # Crear nuevo registro
+                return self.company_profiles_table.create(airtable_data)
+        except Exception as e:
+            logging.error(f"Error creating/updating company profile: {str(e)}")
+            raise
+
+    def test_connection(self) -> bool:
+        """
+        Prueba la conexión con Airtable
+        """
+        try:
+            self.company_profiles_table.all(max_records=1)
+            return True
+        except Exception as e:
+            logging.error(f"Error testing Airtable connection: {str(e)}")
+            return False
