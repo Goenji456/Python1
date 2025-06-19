@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Logistics - Selección de Plantilla</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="min-h-full bg-white relative">
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern id="hexagons" width="50" height="43.4" patternUnits="userSpaceOnUse" patternTransform="scale(2)">
+                    <path d="M25,21.7l-25,43.4l50,0l25,-43.4l-25,-43.4l-50,0l-25,43.4z" fill="none" stroke="#f0f0f0" stroke-width="1"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#hexagons)"/>
+            <path d="M0,900 Q400,850 800,900 T1600,900" fill="none" stroke="#ff0000" stroke-width="2"/>
+            <path d="M0,910 Q400,860 800,910 T1600,910" fill="none" stroke="#ff0000" stroke-width="2"/>
+        </svg>
+    </div>
+
+    <!-- Logout button -->
+    <div class="flex justify-end p-4">
+        <a href="{{ url_for('logout') }}" class="text-red-600 hover:text-red-800">Logout</a>
+    </div>
+
+    <div class="relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h1 class="text-5xl font-extrabold italic">
+                        <span class="text-red-600">Conectamos</span>
+                        <span class="text-black">Continentes</span>
+                    </h1>
+                    <p class="mt-2 text-xl text-gray-600">Seleccione el tipo de plantilla que desea utilizar</p>
+                </div>
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de Nexus Logistics" class="h-48 -mt-8">
+            </div>
+
+            <div class="flex justify-center items-center min-h-[60vh]">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+                    <!-- Exportador-Comercializador Card -->
+                    <a href="{{ url_for('index', template='exportador-comercializador') }}" 
+                       class="bg-white rounded-lg shadow-lg overflow-hidden border-t-4 border-red-600 transform transition-all duration-300 hover:scale-105">
+                        <div class="bg-gradient-to-r from-red-600 to-red-700 text-white p-6">
+                            <h2 class="text-2xl font-bold">Exportador-Comercializador</h2>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-gray-600">Seleccione esta opción si usted es un exportador o comercializador de productos.</p>
+                        </div>
+                    </a>
+
+                    <!-- Exportador-Productor Card -->
+                    <a href="{{ url_for('index', template='exportador-productor') }}" 
+                       class="bg-white rounded-lg shadow-lg overflow-hidden border-t-4 border-red-600 transform transition-all duration-300 hover:scale-105">
+                        <div class="bg-gradient-to-r from-red-600 to-red-700 text-white p-6">
+                            <h2 class="text-2xl font-bold">Exportador-Productor</h2>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-gray-600">Seleccione esta opción si usted es un productor que exporta sus propios productos.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
