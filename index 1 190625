@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Logistics - Instrucciones de Embarque</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="min-h-full bg-white relative">
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern id="hexagons" width="50" height="43.4" patternUnits="userSpaceOnUse" patternTransform="scale(2)">
+                    <path d="M25,21.7l-25,43.4l50,0l25,-43.4l-25,-43.4l-50,0l-25,43.4z" fill="none" stroke="#f0f0f0" stroke-width="1"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#hexagons)"/>
+            <path d="M0,900 Q400,850 800,900 T1600,900" fill="none" stroke="#ff0000" stroke-width="2"/>
+            <path d="M0,910 Q400,860 800,910 T1600,910" fill="none" stroke="#ff0000" stroke-width="2"/>
+        </svg>
+    </div>
+<!-- Add this near the top of your body or in your navigation area -->
+<div class="flex justify-end p-4">
+    <a href="{{ url_for('logout') }}" class="text-red-600 hover:text-red-800">Logout</a>
+</div>
+
+<!-- Rest of your existing index.html content -->
+    <div class="relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex justify-between items-center mb-4">
+                <a href="{{ url_for('landing') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 font-semibold">
+                    ← Volver a selección de plantilla
+                </a>
+            </div>
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h1 class="text-5xl font-extrabold italic">
+                        <span class="text-red-600">Conectamos</span>
+                        <span class="text-black">Continentes</span>
+                    </h1>
+                    <p class="mt-2 text-xl text-gray-600">Complete el formulario para generar su documento de instrucciones de embarque</p>
+                </div>
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de Nexus Logistics" class="h-48 -mt-8">
+            </div>
+
+            <div class="flex justify-center items-center min-h-screen">
+                <!-- Formulario centrado -->
+                <div class="w-full max-w-3xl">
+                    <div class="bg-white shadow-lg rounded-lg overflow-hidden border-t-4 border-red-600">
+                        <div class="bg-gradient-to-r from-red-600 to-red-700 text-white p-6">
+                            <h2 class="text-2xl font-bold">Detalles del Documento</h2>
+                            <p class="mt-2 text-sm">
+                                {% if template_type == 'exportador-comercializador' %}
+                                    Plantilla: Exportador-Comercializador
+                                {% else %}
+                                    Plantilla: Exportador-Productor
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="p-6">
+                            <form id="envioForm" method="post" action="/index">
+                                {{ form.hidden_tag() }}
+                                <input type="hidden" name="template_type" value="{{ template_type }}">
+                                <div class="tab-list grid grid-cols-3 gap-4 mb-6">
+                                    <button type="button" class="tab-trigger bg-red-600 text-white font-bold py-2 px-4 rounded" data-tab="exportador">Exportador</button>
+                                    {% if template_type != 'exportador-productor' %}
+                                    <button type="button" class="tab-trigger bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded" data-tab="productor">Productor</button>
+                                    {% endif %}
+                                    <button type="button" class="tab-trigger bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded" data-tab="transporte">Transporte</button>
+                                </div>
+                                <div id="exportador" class="tab-content">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {% if template_type == 'exportador-productor' %}
+                                            {% set allowed_fields = [
+                                                'ruc_exportador',
+                                                'razon_social_exportador',
+                                                'domicilio_fiscal_exportador',
+                                                'locales_anexos_exportador',
+                                                'departamento_productor',
+                                                'objeto_social_exportador',
+                                                'representante_legal_exportador',
+                                                'dni_exportador',
+                                                'cargo_exportador',
+                                                'telefono_exportador',
+                                                'origen_de_los_fondos_exportador',
+                                                'cliente_empresa_exportador',
+                                                'destino_exportador',
+                                                'peso_kg_exportador',
+                                                'fecha_de_ingreso_exportador',
+                                                'guia_aerea_exportador',
+                                                'aerolinea_exportador',
+                                                'invoice_origen_exportador',
+                                                'recpo_exportador',
+                                                'guia_de_remision_exportador',
+                                                'reinpo_exportador',
+                                                'ciudad_exportador',
+                                                'fecharegistro_exportador',
+                                                'dore_exportador',
+                                                'factura_productor',
+                                                'fecha_factura_productor',
+                                                'valor_fob_productor',
+                                                'peso_neto_productor',
+                                                'peso_bruto_productor',
+                                                'tipo_producto_productor',
+                                                'barra_de_oro_dore_productor',
+                                                'peso_no_oro_productor',
+                                                'guia_remision_productor',
+                                                'concesion_minera_productor',
+                                                'direccion_concesion_productor',
+                                                'fecha_guia_remision_productor',
+                                            ] %}
+                                            {% for field in form if field.name in allowed_fields %}
+                                                <div class="space-y-2">
+                                                    {{ field.label(class="block text-sm font-medium text-gray-700") }}
+                                                    {{ field(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300", id=field.name) }}
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                        {% for field in form if field.name.startswith('ruc_exportador') or field.name.startswith('razon_social_exportador') or field.name.startswith('domicilio_fiscal_exportador') or field.name.startswith('locales_anexos_exportador') or field.name.startswith('objeto_social_exportador') or field.name.startswith('representante_legal_exportador') or field.name.startswith('dni_exportador') or field.name.startswith('cargo_exportador') or field.name.startswith('telefono_exportador') or field.name.startswith('origen_de_los_fondos_exportador') or field.name.startswith('consignee_importador_exportador') or field.name.startswith('domicilio_fiscal_consignee_exportador') or field.name.startswith('telefono_consignee_exportador') or field.name.startswith('email_consignee_exportador') or field.name.startswith('attn_consignee_exportador') or field.name.startswith('notify1_exportador') or field.name.startswith('ruc_notify_exportador') or field.name.startswith('domicilio_fiscal_notify_exportador') or field.name.startswith('notify2_exportador') or field.name.startswith('ruc_notify2_exportador') or field.name.startswith('domicilio_fiscal_notify2_exportador') or field.name.startswith('cliente_empresa_exportador') or field.name.startswith('destino_exportador') or field.name.startswith('peso_kg_exportador') or field.name.startswith('fecha_de_ingreso_exportador') or field.name.startswith('fecha_de_embarque_exportador') or field.name.startswith('invoice_origen_exportador') or field.name.startswith('mining_code_exportador') or field.name.startswith('guia_de_remision_exportador') or field.name.startswith('reinpo_exportador') or field.name.startswith('ciudad_exportador') or field.name.startswith('fecharegistro_exportador') %}
+                                                {% if not (template_type == 'exportador-comercializador' and field.name in [
+                                                    'consignee_importador_exportador',
+                                                    'domicilio_fiscal_consignee_exportador',
+                                                    'telefono_consignee_exportador',
+                                                    'email_consignee_exportador',
+                                                    'attn_consignee_exportador',
+                                                    'notify1_exportador',
+                                                    'ruc_notify_exportador',
+                                                    'domicilio_fiscal_notify_exportador',
+                                                    'notify2_exportador',
+                                                    'ruc_notify2_exportador',
+                                                    'domicilio_fiscal_notify2_exportador',
+                                                ]) %}
+                                            <div class="space-y-2">
+                                                {{ field.label(class="block text-sm font-medium text-gray-700") }}
+                                                {{ field(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300", id=field.name) }}
+                                            </div>
+                                                {% endif %}
+                                        {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div id="productor" class="tab-content" style="display: none;">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {% if template_type == 'exportador-comercializador' %}
+                                            {% set allowed_fields = [
+                                                'ruc_productor',
+                                                'razon_social_productor',
+                                                'domicilio_fiscal_productor',
+                                                'dni_productor',
+                                                'departamento_productor',
+                                                'factura_productor',
+                                                'fecha_factura_productor',
+                                                'valor_fob_productor',
+                                                'peso_bruto_productor',
+                                                'guia_remision_productor',
+                                                'concesion_minera_productor',
+                                                'codigo_ingemmet_n_productor',
+                                                'fecha_registro_productor',
+                                                'direccion_concesion_productor',
+                                                'reinpo_exportador',
+                                                'recpo_exportador',
+                                            ] %}
+                                            {% for field in form if field.name in allowed_fields %}
+                                                <div class="space-y-2">
+                                                    {{ field.label(class="block text-sm font-medium text-gray-700") }}
+                                                    {{ field(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300") }}
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div id="transporte" class="tab-content" style="display: none;">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {% if template_type == 'exportador-productor' %}
+                                            {% set transporte_fields = [
+                                                'ruc_transporte',
+                                                'razon_social_transporte',
+                                                'domicilio_fiscal_transporte',
+                                                'marca_transporte',
+                                                'placa_transporte',
+                                            ] %}
+                                            {% for field in form if field.name in transporte_fields %}
+                                                <div class="space-y-2">
+                                                    {{ field.label(class="block text-sm font-medium text-gray-700") }}
+                                                    {{ field(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300") }}
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            {% set transporte_fields = [
+                                                'ruc_transporte',
+                                                'razon_social_transporte',
+                                                'domicilio_fiscal_transporte',
+                                                'marca_transporte',
+                                                'placa_transporte',
+                                            ] %}
+                                            {% for field in form if field.name in transporte_fields %}
+                                                <div class="space-y-2">
+                                                    {{ field.label(class="block text-sm font-medium text-gray-700") }}
+                                                    {{ field(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300") }}
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <!-- Botón dentro del formulario, centrado -->
+                                <div class="flex justify-center mt-8">
+                                    <button type="submit" id="submitButton" class="bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 px-8 py-3 rounded-full text-lg font-semibold transition-all duration-300 transform hover:scale-105">
+                                        Generar Instrucción de Embarque
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+     function updateDateIngresoFields() {
+         const fechaIngresoExportadorField = document.getElementById('fecha_de_ingreso_exportador');
+         const fechaIngresoGuiaField = document.getElementById('guia_aerea_exportador');
+         const diaIngresoField = document.getElementById('guia_ingreso_dia');
+         const monthIngresoField = document.getElementById('guia_ingreso_month');
+
+         function updateIngresoFields(inputDate) {
+             if (!inputDate) return;
+
+             // Parse the date without converting to UTC
+             const [year, month, day] = inputDate.split('-').map(Number);
+             const date = new Date(year, month - 1, day);
+             
+             // Update DIA (use getDate to get the correct day)
+             diaIngresoField.value = date.getDate().toString().padStart(2, '0');
+
+             // Update MONTH
+             const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+             monthIngresoField.value = months[date.getMonth()];
+
+             console.log('Updated DIA ingreso:', diaIngresoField.value);
+             console.log('Updated MONTH ingreso:', monthIngresoField.value);
+         }
+
+         fechaIngresoExportadorField.addEventListener('change', function() {
+             updateIngresoFields(this.value);
+             fechaIngresoGuiaField.value = this.value; // Sync with Guía Aérea field
+         });
+
+         fechaIngresoGuiaField.addEventListener('change', function() {
+             updateIngresoFields(this.value);
+             fechaIngresoExportadorField.value = this.value; // Sync with Exportador field
+         });
+
+         // Initial update
+         if (fechaIngresoExportadorField.value) {
+             updateIngresoFields(fechaIngresoExportadorField.value);
+         } else if (fechaIngresoGuiaField.value) {
+             updateIngresoFields(fechaIngresoGuiaField.value);
+         }
+     }
+
+     // Make sure this function is called when the DOM is loaded
+     document.addEventListener('DOMContentLoaded', function() {
+         updateDateIngresoFields();
+         // ... other function calls ...
+     });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM fully loaded');
+        setupRucAutoFill();  // Call this function first
+        // ... rest of your existing code ...
+
+        function updateCiudadAndAeropuerto() {
+            const destinoExportadorField = document.getElementById('destino_exportador');
+            const destinoGuiaField = document.getElementById('guia_destino_exportador');
+            const ciudadField = document.getElementById('guia_ciudad');
+            const aeropuertoField = document.getElementById('guia_aeropuerto_destino');
+
+            if (destinoExportadorField && destinoGuiaField && ciudadField && aeropuertoField) {
+                const destino = destinoExportadorField.value.toLowerCase();
+                destinoGuiaField.value = destinoExportadorField.value;
+
+                if (destino === 'india') {
+                    ciudadField.value = 'DEL';
+                    aeropuertoField.value = 'DELHI-DEL';
+                } else if (destino === 'dubai') {
+                    ciudadField.value = 'DXB';
+                    aeropuertoField.value = 'DUBAI-DXB';
+                } else {
+                    ciudadField.value = '';
+                    aeropuertoField.value = '';
+                }
+
+                console.log('Updated DESTINO:', destino);
+                console.log('Updated CIUDAD:', ciudadField.value);
+                console.log('Updated Aeropuerto de destino:', aeropuertoField.value);
+            } else {
+                console.error('One or more fields not found for CIUDAD and Aeropuerto update');
+            }
+        }
+
+        const destinoExportadorField = document.getElementById('destino_exportador');
+        if (destinoExportadorField) {
+            destinoExportadorField.addEventListener('input', function() {
+                updateCiudadAndAeropuerto();
+                console.log('Exportador DESTINO changed:', this.value);
+            });
+        } else {
+            console.error('DESTINO field not found in Exportador section');
+        }
+
+        // Use a different variable name to avoid redeclaration
+        const destinoGuiaFieldAereo = document.getElementById('guia_destino_exportador');
+        if (destinoGuiaFieldAereo) {
+            destinoGuiaFieldAereo.addEventListener('input', function() {
+                document.getElementById('destino_exportador').value = this.value;
+                updateCiudadAndAeropuerto();
+                console.log('Guía Aérea DESTINO changed:', this.value);
+            });
+        } else {
+            console.error('DESTINO field not found in Guía Aérea section');
+        }
+
+        // Initial call to set values on page load
+        updateCiudadAndAeropuerto();
+
+        function updateFlights() {
+            const aerolinea = document.getElementById('guia_aerolinea_exportador').value;
+            const destino = document.getElementById('guia_destino_exportador').value.toLowerCase();
+            const flightIField = document.getElementById('guia_flight_i');
+            const flightIIField = document.getElementById('guia_flight_ii');
+
+            let flightI, flightII;
+
+            if (aerolinea === 'SOCIETE AIR FRANCE') {
+                if (destino === 'india') {
+                    flightI = 'AF0483';
+                    flightII = 'AF0226';
+                } else if (destino === 'dubai') {
+                    flightI = 'AF0483';
+                    flightII = 'AF0662';
+                }
+            } else if (aerolinea === 'KLM CARGO') {
+                flightI = 'KL0744';
+                if (destino === 'india') {
+                    flightII = 'KL0871';
+                } else {
+                    flightII = 'KL0427';
+                }
+            }
+
+            flightIField.value = flightI || '';
+            flightIIField.value = flightII || '';
+
+            console.log('Updated FLIGHT I:', flightI);
+            console.log('Updated FLIGHT II:', flightII);
+        }
+
+        // Add event listeners to update flights when AEROLINEA or DESTINO changes
+        const aerolineaField = document.getElementById('guia_aerolinea_exportador');
+        const destinoGuiaField = document.getElementById('guia_destino_exportador');
+
+        if (aerolineaField && destinoGuiaField) {
+            aerolineaField.addEventListener('change', updateFlights);
+            destinoGuiaField.addEventListener('input', updateFlights);
+        } else {
+            console.error('AEROLINEA or DESTINO field not found');
+        }
+
+        // Call updateFlights initially to set values on page load
+        updateFlights();
+
+        function updateDateFields() {
+            const fechaEmbarqueExportadorField = document.getElementById('fecha_de_embarque_exportador');
+            const fechaEmbarqueGuiaField = document.getElementById('guia_fecha_de_embarque');
+            const diaField = document.getElementById('guia_dia');
+            const monthField = document.getElementById('guia_month');
+            const fechaField = document.getElementById('guia_fecha');
+
+            function updateFields(inputDate) {
+                if (!inputDate) return;
+
+                // Create a date object using UTC to avoid timezone issues
+                const [year, month, day] = inputDate.split('-').map(Number);
+                const date = new Date(Date.UTC(year, month - 1, day));
+                
+                // Update DIA (use getUTCDate to get the correct day)
+                diaField.value = date.getUTCDate().toString().padStart(2, '0');
+
+                // Update MONTH
+                const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                monthField.value = months[date.getUTCMonth()];
+
+                // Update FECHA
+                const monthNames = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
+                fechaField.value = `${diaField.value}-${monthNames[date.getUTCMonth()]}-${date.getUTCFullYear()}`;
+
+                console.log('Updated DIA:', diaField.value);
+                console.log('Updated MONTH:', monthField.value);
+                console.log('Updated FECHA:', fechaField.value);
+            }
+
+            // Update when Exportador fecha de embarque changes
+            fechaEmbarqueExportadorField.addEventListener('change', function() {
+                updateFields(this.value);
+                fechaEmbarqueGuiaField.value = this.value; // Sync with Guía Aérea field
+            });
+
+            // Update when Guía Aérea fecha de embarque changes
+            fechaEmbarqueGuiaField.addEventListener('change', function() {
+                updateFields(this.value);
+                fechaEmbarqueExportadorField.value = this.value; // Sync with Exportador field
+            });
+
+            // Initial update
+            if (fechaEmbarqueExportadorField.value) {
+                updateFields(fechaEmbarqueExportadorField.value);
+            } else if (fechaEmbarqueGuiaField.value) {
+                updateFields(fechaEmbarqueGuiaField.value);
+            }
+        }
+
+        function updateAerolineaFields() {
+            const aerolineaField = document.getElementById('aerolinea_exportador');
+            const guiaAerolineaField = document.getElementById('guia_aerolinea_exportador');
+            const aerolineaRsField = document.getElementById('guia_aerolinea_rs');
+            const rucField = document.getElementById('guia_ruc');
+            const aeField = document.getElementById('guia_ae');
+
+            function updateFields(aerolinea) {
+                console.log('Selected Aerolinea:', aerolinea);
+                if (aerolinea === 'KLM CARGO') {
+                    aerolineaRsField.value = 'KLM CIA. REAL HOLANDESA DE AVIACIÓN';
+                    rucField.value = '20100103738';
+                    aeField.value = 'KL';
+                } else if (aerolinea === 'SOCIETE AIR FRANCE') {
+                    aerolineaRsField.value = 'SOCIETE AIR FRANCE SUCURSAL EN EL PERU';
+                    rucField.value = '20100142041';
+                    aeField.value = 'AF';
+                } else {
+                    aerolineaRsField.value = '';
+                    rucField.value = '';
+                    aeField.value = '';
+                }
+
+                console.log('Updated AEROLINEA_RS:', aerolineaRsField.value);
+                console.log('Updated RUC AEROLINEA:', rucField.value);
+                console.log('Updated AE:', aeField.value);
+            }
+
+            if (aerolineaField && guiaAerolineaField && aerolineaRsField && rucField && aeField) {
+                aerolineaField.addEventListener('change', function() {
+                    guiaAerolineaField.value = this.value;
+                    updateFields(this.value);
+                });
+
+                guiaAerolineaField.addEventListener('change', function() {
+                    aerolineaField.value = this.value;
+                    updateFields(this.value);
+                });
+
+                // Trigger the event on page load if there's an initial value
+                const initialValue = aerolineaField.value || guiaAerolineaField.value;
+                if (initialValue) {
+                    updateFields(initialValue);
+                }
+            } else {
+                console.error('One or more aerolinea fields not found');
+            }
+        }
+
+        function updateDore() {
+            const destinoField = document.getElementById('guia_destino_exportador');
+            const doreField = document.getElementById('guia_dore');
+
+            if (destinoField && doreField) {
+                const destino = destinoField.value.toLowerCase().trim();
+                console.log('Current destino value:', destino);
+                
+                if (destino === 'india') {
+                    doreField.value = 'DORE';
+                } else {
+                    doreField.value = '';
+                }
+
+                console.log('Updated DORE:', doreField.value);
+            } else {
+                console.error('DESTINO or DORE field not found');
+                console.log('destinoField:', destinoField);
+                console.log('doreField:', doreField);
+            }
+        }
+
+        // Add event listener to update DORE when DESTINO changes
+        function setupDoreListeners() {
+            const destinoField = document.getElementById('guia_destino_exportador');
+            const destinoExportadorField = document.getElementById('destino_exportador');
+
+            if (destinoField) {
+                destinoField.addEventListener('input', updateDore);
+                destinoField.addEventListener('change', updateDore);
+                console.log('Event listeners added to guia_destino_exportador field');
+            } else {
+                console.error('guia_destino_exportador field not found');
+            }
+
+            if (destinoExportadorField) {
+                destinoExportadorField.addEventListener('input', function() {
+                    destinoField.value = this.value;
+                    updateDore();
+                });
+                console.log('Event listener added to destino_exportador field');
+            } else {
+                console.error('destino_exportador field not found');
+            }
+
+            // Call updateDore initially to set value on page load
+            updateDore();
+        }
+
+        // Call setupDoreListeners when the document is loaded
+        document.addEventListener('DOMContentLoaded', setupDoreListeners);
+
+        // Update the updateAllGuiaAereaFields function
+        function updateAllGuiaAereaFields() {
+            updateCiudadAndAeropuerto();
+            updateDateFields();
+            updateAerolineaFields();
+            updateIntField();
+            updateDore();  // Add this line
+          
+        }
+
+        // Make sure to call updateAllGuiaAereaFields when the Guía Aérea tab is activated
+        document.querySelectorAll('.tab-trigger').forEach(trigger => {
+            trigger.addEventListener('click', function() {
+                if (this.getAttribute('data-tab') === 'guia-aerea') {
+                    updateAllGuiaAereaFields();
+                }
+            });
+        });
+
+        // Call updateAllGuiaAereaFields on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAllGuiaAereaFields();
+        });
+
+        function updateIntField() {
+            const aerolineaField = document.getElementById('guia_aerolinea_exportador');
+            const intField = document.getElementById('guia_int');
+
+            if (aerolineaField && intField) {
+                const aerolinea = aerolineaField.value;
+                if (aerolinea === 'SOCIETE AIR FRANCE') {
+                    intField.value = 'CDG';
+                } else if (aerolinea === 'KLM CARGO') {
+                    intField.value = 'AMS';
+                } else {
+                    intField.value = '';
+                }
+
+                console.log('Updated INT:', intField.value);
+            } else {
+                console.error('AEROLINEA or INT field not found');
+            }
+        }
+
+        // Add event listener to update INT when AEROLINEA changes
+        if (!window.aerolineaField) {
+            window.aerolineaField = document.getElementById('guia_aerolinea_exportador');
+            if (window.aerolineaField) {
+                window.aerolineaField.addEventListener('change', updateIntField);
+            }
+        }
+
+        // Call updateIntField initially to set value on page load
+        updateIntField();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAerolineaFields();
+        });
+
+        document.getElementById('envioForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Update the INT field before submission
+            updateIntField();
+            
+            // Create FormData object
+            var formData = new FormData(this);
+            
+            // Send form data to server
+            fetch('/your_submission_endpoint', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle response
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
+        // Call all the update functions
+        updateCiudadAndAeropuerto();
+        updateDateFields();
+        updateAerolineaFields();
+        updateIntField();
+      ;  // Add this line
+
+        // Add this function to update all Guía Aérea fields
+        function updateAllGuiaAereaFields() {
+            updateCiudadAndAeropuerto();
+            updateDateFields();
+            updateAerolineaFields();
+            updateIntField();
+            updateDore();
+           
+        }
+
+        // Call this function when the Guía Aérea tab is activated
+        document.querySelectorAll('.tab-trigger').forEach(trigger => {
+            trigger.addEventListener('click', function() {
+                if (this.getAttribute('data-tab') === 'guia-aerea') {
+                    updateAllGuiaAereaFields();
+                }
+            });
+        });
+
+        // Call all update functions on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAllGuiaAereaFields();
+        });
+
+        // Add this function inside your existing DOMContentLoaded event listener
+        function setupRucAutoFill() {
+            console.log("Setting up RUC auto-fill");
+            const rucFields = ['ruc_exportador', 'guia_ruc_exportador'];
+            rucFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('blur', handleRucBlur);
+                    console.log(`Event listener added to RUC field: ${fieldId}`);
+                } else {
+                    console.error(`RUC field not found: ${fieldId}`);
+                }
+            });
+        }
+
+        async function handleRucBlur() {
+            const ruc = this.value.trim();
+            console.log('RUC entered:', ruc);
+            if (ruc) {
+                try {
+                    console.log('Fetching company profile for RUC:', ruc);
+                    const response = await fetch(`/api/company_profile/${ruc}`);
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    console.log('Received data:', data);
+                    populateFields(data);
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    alert('Error fetching company data: ' + error.message);
+                }
+            }
+        }
+
+        function populateFields(data) {
+            console.log('Populating fields with data:', JSON.stringify(data, null, 2));
+            const fields = {
+                'ruc_exportador': data.ruc,
+                'razon_social_exportador': data.razon_social,
+                'domicilio_fiscal_exportador': data.domicilio_fiscal,
+                'telefono_exportador': data.telefono,
+                'consignee_importador_exportador': data.consignee_importador,
+                'domicilio_fiscal_consignee_exportador': data.domicilio_fiscal_consignee,
+                'notify1_exportador': data.notify1,
+                'notify2_exportador': data.notify2,
+                'guia_ruc_exportador': data.ruc,
+                'locales_anexos_exportador': data.locales_anexos,
+                'objeto_social_exportador': data.objeto_actividad_economica,
+                'representante_legal_exportador': data.representante_legal,
+                'dni_exportador': data.dni_representante,
+                'cargo_exportador': data.cargo_representante,
+                'guia_razon_social_exportador': data.razon_social,
+                'guia_domicilio_fiscal_exportador': data.domicilio_fiscal,
+                'guia_telefono_exportador': data.telefono,
+                'guia_consignee_importador_exportador': data.consignee_importador,
+                'guia_domicilio_fiscal_consignee_exportador': data.domicilio_fiscal_consignee,
+                'origen_de_los_fondos_exportador': data.origen_fondos,
+                'guia_notify1_exportador': data.notify1,
+                'guia_notify2_exportador': data.notify2
+            };
+
+            for (const [fieldId, value] of Object.entries(fields)) {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.value = value || '';
+                    console.log(`Field ${fieldId} populated with:`, field.value);
+                    field.dispatchEvent(new Event('change', { bubbles: true }));
+                } else {
+                    console.error(`Field ${fieldId} not found`);
+                }
+            }
+        }
+
+        // Add event listeners for the generate buttons
+        const generarInstruccionBtn = document.getElementById('submitButton');
+        const generarGuiaAereaBtn = document.getElementById('guiaAereaButton');
+        const form = document.getElementById('envioForm');
+
+        if (generarInstruccionBtn) {
+            generarInstruccionBtn.addEventListener('click', function(e) {
+                console.log('Generar Instruccion button clicked');
+                e.preventDefault();
+                form.submit(); // Submit nativo
+            });
+        } else {
+            console.error('Generar Instruccion button not found');
+        }
+
+        if (generarGuiaAereaBtn) {
+            generarGuiaAereaBtn.addEventListener('click', function(e) {
+                console.log('Generar Guia Aerea button clicked');
+                e.preventDefault();
+                submitForm('/generar_guia_aerea', 'POST');
+            });
+        } else {
+            console.error('Generar Guia Aerea button not found');
+        }
+
+        function submitForm(url, method) {
+            console.log('Submitting form to:', url);
+            const formData = new FormData(form);
+            
+            fetch(url, {
+                method: method,
+                body: formData
+            })
+            .then(response => {
+                console.log('Response received:', response);
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                console.log('Blob received:', blob);
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = downloadUrl;
+                
+                // Set the filename based on the request URL
+                if (url.includes('generar_guia_aerea')) {
+                    a.download = 'Guia Aerea.docx';
+                } else {
+                    a.download = 'Instruccion de Embarque.docx';
+                }
+                
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(downloadUrl);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred: ' + (error.error || 'Unknown error'));
+            });
+        }
+
+        function updateCombinedAWB() {
+            const awbI = document.getElementById('guia_awb_i').value;
+            let awbII = document.getElementById('guia_awb_ii').value;
+            const aerolinea = document.getElementById('guia_aerolinea_exportador').value;
+            
+            let prefix = awbI;
+            if (aerolinea === 'KLM CARGO' && !prefix) {
+                prefix = '074';
+            } else if (aerolinea === 'SOCIETE AIR FRANCE' && !prefix) {
+                prefix = '057';
+            }
+            
+            // Remove leading zeros from awbII
+            awbII = awbII.replace(/^0+/, '');
+            
+            // Only pad with zeros if there's an actual value
+            const paddedAwbII = awbII ? awbII.padStart(8, '0') : '';
+            
+            document.getElementById('guia_awb_i').value = prefix;
+            document.getElementById('guia_awb_ii').value = awbII; // Use non-padded value here
+            
+            // Only show combined AWB if both parts are present
+            if (prefix && paddedAwbII) {
+                document.getElementById('guia_awb').value = `${prefix}-${paddedAwbII}`;
+            } else {
+                document.getElementById('guia_awb').value = '';
+            }
+            
+            console.log('Updated Guía Aérea AWB:', document.getElementById('guia_awb').value);
+        }
+
+        function initializeAWBFields() {
+            const awbIIField = document.getElementById('guia_awb_ii');
+            if (awbIIField) {
+                awbIIField.value = ''; // Clear any default value
+            }
+            updateCombinedAWB(); // Update combined AWB
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAWBFields();
+            
+            const awbIIField = document.getElementById('guia_awb_ii');
+            awbIIField.addEventListener('input', updateCombinedAWB);
+            
+            const awbIField = document.getElementById('guia_awb_i');
+            awbIField.addEventListener('input', updateCombinedAWB);
+            
+            const aerolineaField = document.getElementById('guia_aerolinea_exportador');
+            aerolineaField.addEventListener('change', updateCombinedAWB);
+        });
+
+        function combineAWB() {
+            const awbPart1 = document.getElementById('awb_part1').value;
+            const awbPart2 = document.getElementById('awb_part2').value;
+            const awbPart3 = document.getElementById('awb_part3').value;
+            
+            document.getElementById('guia_awb_i').value = awbPart1;
+            document.getElementById('guia_awb_ii').value = awbPart2 + awbPart3;
+            
+            updateCombinedAWB();
+        }
+
+        // Add event listeners to AWB part inputs
+        ['awb_part1', 'awb_part2', 'awb_part3'].forEach(id => {
+            document.getElementById(id).addEventListener('input', combineAWB);
+        });
+
+        // Add event listeners to editable AWB fields in Guía Aérea
+        ['guia_awb_i', 'guia_awb_ii'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateCombinedAWB);
+        });
+
+        // Add event listener to aerolinea field
+        document.getElementById('guia_aerolinea_exportador').addEventListener('change', updateCombinedAWB);
+
+        // Modify your existing setupAWBAutoFill function
+        function setupAWBAutoFill() {
+            const aerolineaField = document.getElementById('aerolinea_exportador');
+            const guiaAerolineaField = document.getElementById('guia_aerolinea_exportador');
+            const awbPart1 = document.getElementById('awb_part1');
+
+            function updateAWBPart1(aerolinea) {
+                if (aerolinea === 'SOCIETE AIR FRANCE') {
+                    awbPart1.value = '057';
+                } else if (aerolinea === 'KLM CARGO') {
+                    awbPart1.value = '074';
+                } else {
+                    awbPart1.value = '';
+                }
+                combineAWB(); // This will trigger updateCombinedAWB as well
+            }
+
+            function syncAerolineaFields(sourceField, targetField) {
+                targetField.value = sourceField.value;
+                updateAWBPart1(sourceField.value);
+            }
+
+            if (aerolineaField && guiaAerolineaField && awbPart1) {
+                aerolineaField.addEventListener('change', function() {
+                    syncAerolineaFields(aerolineaField, guiaAerolineaField);
+                });
+                guiaAerolineaField.addEventListener('change', function() {
+                    syncAerolineaFields(guiaAerolineaField, aerolineaField);
+                });
+            } else {
+                console.error('One or more AWB input fields or aerolinea fields not found');
+            }
+
+            // Initial update
+            updateAWBPart1(aerolineaField.value || guiaAerolineaField.value);
+        }
+
+        // Call the setupAWBAutoFill function
+        setupAWBAutoFill();
+
+        // Add this function to initialize the AWB fields
+        function initializeAWBFields() {
+            const awbIIField = document.getElementById('guia_awb_ii');
+            if (awbIIField) {
+                awbIIField.value = ''; // Clear any default value
+            }
+            updateCombinedAWB(); // Update combined AWB
+        }
+
+        // Call initializeAWBFields when the page loads
+        document.addEventListener('DOMContentLoaded', initializeAWBFields);
+
+        function setupAutoFill() {
+            const fieldPairs = [
+                ['destino_exportador', 'guia_destino_exportador'],
+                ['consignee_importador_exportador', 'guia_consignee_importador_exportador'],
+                ['domicilio_fiscal_consignee_exportador', 'guia_domicilio_fiscal_consignee_exportador'],
+                ['notify2_exportador', 'guia_notify2_exportador'],
+                ['peso_kg_exportador', 'guia_peso_kg_exportador'],
+                ['notify1_exportador', 'guia_notify1_exportador'],
+                ['telefono_exportador', 'guia_telefono_exportador'],
+                ['razon_social_exportador', 'guia_razon_social_exportador'],
+                ['domicilio_fiscal_exportador', 'guia_domicilio_fiscal_exportador'],
+                ['aerolinea_exportador', 'guia_aerolinea_exportador'],
+                ['ruc_exportador', 'guia_ruc_exportador'],
+                ['email_consignee_exportador', 'guia_email_consignee_exportador'],
+                ['telefono_consignee_exportador', 'guia_telefono_consignee_exportador'],
+                ['fecha_de_embarque_exportador', 'guia_fecha_de_embarque'],
+                ['fecha_de_ingreso_exportador', 'guia_fecha_ingreso']
+            ];
+
+            fieldPairs.forEach(([sourceId, targetId]) => {
+                const sourceField = document.getElementById(sourceId);
+                const targetField = document.getElementById(targetId);
+                if (sourceField && targetField) {
+                    sourceField.addEventListener('input', function() {
+                        console.log(`Auto-filling: ${sourceId} to ${targetId} with value: ${this.value}`);
+                        targetField.value = this.value;
+                        // Call relevant update functions
+                        updateCiudadAndAeropuerto();
+                        updateDateFields();
+                        updateAerolineaFields();
+                        updateIntField();
+                        updateDore();
+                    });
+                } else {
+                    console.error(`Fields not found: ${sourceId}, ${targetId}`);
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded. Setting up functionality...');
+            
+            setupAutoFill();
+            setupRucAutoFill();
+            setupAWBAutoFill();
+            initializeAWBFields();
+            
+            // Fill Guía Aérea fields when switching to that tab
+            document.querySelectorAll('.tab-trigger').forEach(trigger => {
+                trigger.addEventListener('click', function() {
+                    if (this.getAttribute('data-tab') === 'guia-aerea') {
+                        console.log('Switching to Guía Aérea tab, filling fields...');
+                        fillGuiaAereaFields();
+                    }
+                });
+            });
+
+            // Fill Guía Aérea fields on page load
+            fillGuiaAereaFields();
+        });
+
+        // Keep your existing updateAllGuiaAereaFields function
+        function updateAllGuiaAereaFields() {
+            updateCiudadAndAeropuerto();
+            updateDateFields();
+            updateAerolineaFields();
+            updateIntField();
+            updateDore();
+        }
+
+        // Your existing code for tab switching
+        document.querySelectorAll('.tab-trigger').forEach(trigger => {
+            trigger.addEventListener('click', function() {
+                if (this.getAttribute('data-tab') === 'guia-aerea') {
+                    updateAllGuiaAereaFields();
+                }
+            });
+        });
+
+        // ... rest of your existing code ...
+    });
+    </script>
+    <style>
+        /* Add these styles to ensure proper scrolling */
+        html, body {
+            min-height: 100%;
+            overflow-y: auto;
+        }
+        .tab-content {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+    </style>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabTriggers = document.querySelectorAll('.tab-trigger');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    function switchTab(tabId) {
+        tabContents.forEach(content => {
+            content.style.display = 'none';
+        });
+
+        tabTriggers.forEach(trigger => {
+            trigger.classList.remove('bg-red-600', 'text-white');
+            trigger.classList.add('bg-gray-200', 'text-gray-700');
+        });
+
+        const selectedTab = document.getElementById(tabId);
+        if (selectedTab) {
+            selectedTab.style.display = 'block';
+        }
+
+        const selectedTrigger = document.querySelector(`[data-tab="${tabId}"]`);
+        if (selectedTrigger) {
+            selectedTrigger.classList.remove('bg-gray-200', 'text-gray-700');
+            selectedTrigger.classList.add('bg-red-600', 'text-white');
+        }
+    }
+
+    tabTriggers.forEach(trigger => {
+        trigger.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            switchTab(tabId);
+        });
+    });
+
+    // Set the default tab (e.g., 'exportador')
+    switchTab('exportador');
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded. Setting up Guía Aérea autofill...');
+
+    // Function to copy value from one field to another
+    function copyField(fromId, toId) {
+        const fromField = document.getElementById(fromId);
+        const toField = document.getElementById(toId);
+        if (fromField && toField) {
+            toField.value = fromField.value;
+            console.log(`Copied ${fromId} to ${toId}: ${fromField.value}`);
+        } else {
+            console.error(`Failed to copy ${fromId} to ${toId}`);
+        }
+    }
+
+    // Function to fill all Guía Aérea fields
+    function fillGuiaAerea() {
+        console.log('Filling Guía Aérea fields...');
+        copyField('destino_exportador', 'guia_destino_exportador');
+        copyField('consignee_importador_exportador', 'guia_consignee_importador_exportador');
+        copyField('domicilio_fiscal_consignee_exportador', 'guia_domicilio_fiscal_consignee_exportador');
+        copyField('notify2_exportador', 'guia_notify2_exportador');
+        copyField('peso_kg_exportador', 'guia_peso_kg_exportador');
+        copyField('notify1_exportador', 'guia_notify1_exportador');
+        copyField('telefono_exportador', 'guia_telefono_exportador');
+        copyField('razon_social_exportador', 'guia_razon_social_exportador');
+        copyField('domicilio_fiscal_exportador', 'guia_domicilio_fiscal_exportador');
+        copyField('aerolinea_exportador', 'guia_aerolinea_exportador');
+        copyField('ruc_exportador', 'guia_ruc_exportador');
+        copyField('email_consignee_exportador', 'guia_email_consignee_exportador');
+        copyField('telefono_consignee_exportador', 'guia_telefono_consignee_exportador');
+        copyField('fecha_de_embarque_exportador', 'guia_fecha_de_embarque');
+        copyField('fecha_de_ingreso_exportador', 'guia_fecha_ingreso');
+    }
+
+    // Fill Guía Aérea when switching to that tab
+    document.querySelectorAll('.tab-trigger').forEach(trigger => {
+        trigger.addEventListener('click', function() {
+            if (this.getAttribute('data-tab') === 'guia-aerea') {
+                console.log('Switching to Guía Aérea tab');
+                fillGuiaAerea();
+            }
+        });
+    });
+
+    // Fill Guía Aérea on page load
+    fillGuiaAerea();
+});
+</script>
+  </body>
+</html>
