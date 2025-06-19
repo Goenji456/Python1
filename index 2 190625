@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Logistics - Instrucciones de Embarque</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Agregar jQuery UI para el autocompletado -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <style>
+        /* Estilos personalizados para el autocompletado tipo Google */
+        .ui-autocomplete {
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-radius: 0 0 8px 8px;
+            border: 1px solid #ddd;
+            border-top: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: white;
+            padding: 8px 0;
+            z-index: 9999 !important;
+            width: auto !important;
+            min-width: 400px;
+        }
+        
+        .ui-menu-item {
+            padding: 8px 16px !important;
+            border: none !important;
+            border-radius: 0 !important;
+            cursor: pointer !important;
+        }
+        
+        .ui-menu-item:hover {
+            background-color: #f8f9fa !important;
+            border: none !important;
+        }
+        
+        .ui-menu-item .ui-menu-item-wrapper {
+            padding: 0 !important;
+            border: none !important;
+            background: none !important;
+        }
+        
+        .ui-menu-item .ui-menu-item-wrapper.ui-state-active {
+            margin: 0 !important;
+            background-color: #f8f9fa !important;
+            border: none !important;
+        }
+        
+        .company-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .company-name {
+            font-weight: 500;
+            color: #1a73e8;
+            font-size: 14px;
+        }
+        
+        .company-ruc {
+            font-size: 12px;
+            color: #5f6368;
+        }
+        
+        .search-container {
+            position: relative;
+            margin-bottom: 24px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 24px;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-input:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 1px 6px rgba(26, 115, 232, 0.2);
+        }
+        
+        .search-input:hover {
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-full bg-white relative">
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern id="hexagons" width="50" height="43.4" patternUnits="userSpaceOnUse" patternTransform="scale(2)">
+                    <path d="M25,21.7l-25,43.4l50,0l25,-43.4l-25,-43.4l-50,0l-25,43.4z" fill="none" stroke="#f0f0f0" stroke-width="1"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#hexagons)"/>
+            <path d="M0,900 Q400,850 800,900 T1600,900" fill="none" stroke="#ff0000" stroke-width="2"/>
+            <path d="M0,910 Q400,860 800,910 T1600,910" fill="none" stroke="#ff0000" stroke-width="2"/>
+        </svg>
+    </div>
+<!-- Add this near the top of your body or in your navigation area -->
+<div class="flex justify-end p-4">
+    <a href="{{ url_for('logout') }}" class="text-red-600 hover:text-red-800">Logout</a>
+</div>
+
+<!-- Rest of your existing index.html content -->
+    <div class="relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex justify-between items-center mb-4">
+                <a href="{{ url_for('landing') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 font-semibold">
+                    ← Volver a selección de plantilla
+                </a>
+            </div>
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h1 class="text-5xl font-extrabold italic">
+                        <span class="text-red-600">Conectamos</span>
+                        <span class="text-black">Continentes</span>
+                    </h1>
+                    <p class="mt-2 text-xl text-gray-600">Complete el formulario para generar su documento de instrucciones de embarque</p>
+                </div>
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de Nexus Logistics" class="h-48 -mt-8">
+            </div>
+
+            <div class="flex justify-center items-center min-h-screen">
+                <!-- Formulario centrado -->
+                <div class="w-full max-w-3xl">
+                    <div class="bg-white shadow-lg rounded-lg overflow-hidden border-t-4 border-red-600">
+                        <div class="bg-gradient-to-r from-red-600 to-red-700 text-white p-6">
+                            <h2 class="text-2xl font-bold">Detalles del Documento</h2>
+                            <p class="mt-2 text-sm">
+                                {% if template_type == 'exportador-comercializador' %}
+                                    Plantilla: Exportador-Comercializador
+                                {% else %}
+                                    Plantilla: Exportador-Productor
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="p-6">
+                            <form id="envioForm" method="post" action="/index">
+                                {{ form.hidden_tag() }}
+                                <input type="hidden" name="template_type" value="{{ template_type }}">
+                                <div class="tab-list grid grid-cols-3 gap-4 mb-6">
+                                    <button type="button" class="tab-trigger bg-red-600 text-white font-bold py-2 px-4 rounded" data-tab="exportador">Exportador</button>
+                                    {% if template_type != 'exportador-productor' %}
+                                    <button type="button" class="tab-trigger bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded" data-tab="productor">Productor</button>
+                                    {% endif %}
+                                    <button type="button" class="tab-trigger bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded" data-tab="transporte">Transporte</button>
+                                </div>
+                                <div id="exportador" class="tab-content">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <!-- Campo de búsqueda estilo Google -->
+                                        <div class="search-container md:col-span-2">
+                                            <input type="text" 
+                                                   id="search_razon_social" 
+                                                   class="search-input" 
+                                                   placeholder="Buscar empresa por nombre o RUC..."
+                                                   autocomplete="off">
+                                        </div>
+
+                                        <!-- Campos del formulario -->
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="ruc_exportador">RUC</label>
+                                            <input type="text" id="ruc_exportador" name="ruc_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="razon_social_exportador">Razón Social</label>
+                                            <input type="text" id="razon_social_exportador" name="razon_social_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="domicilio_fiscal_exportador">Domicilio Fiscal</label>
+                                            <input type="text" id="domicilio_fiscal_exportador" name="domicilio_fiscal_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="locales_anexos_exportador">Locales Anexos</label>
+                                            <input type="text" id="locales_anexos_exportador" name="locales_anexos_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="objeto_social_exportador">Objeto Social y Actividad Económica</label>
+                                            <input type="text" id="objeto_social_exportador" name="objeto_social_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="representante_legal_exportador">Representante Legal</label>
+                                            <input type="text" id="representante_legal_exportador" name="representante_legal_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="dni_exportador">DNI Representante</label>
+                                            <input type="text" id="dni_exportador" name="dni_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="cargo_exportador">Cargo</label>
+                                            <input type="text" id="cargo_exportador" name="cargo_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="telefono_exportador">Teléfono</label>
+                                            <input type="text" id="telefono_exportador" name="telefono_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="origen_de_los_fondos_exportador">Origen de los Fondos</label>
+                                            <input type="text" id="origen_de_los_fondos_exportador" name="origen_de_los_fondos_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="cliente_empresa_exportador">Empresa Cliente</label>
+                                            <input type="text" id="cliente_empresa_exportador" name="cliente_empresa_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="destino_exportador">Destino</label>
+                                            <input type="text" id="destino_exportador" name="destino_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="peso_kg_exportador">Peso KG</label>
+                                            <input type="number" step="0.01" id="peso_kg_exportador" name="peso_kg_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="fecha_de_ingreso_exportador">Fecha de Ingreso</label>
+                                            <input type="date" id="fecha_de_ingreso_exportador" name="fecha_de_ingreso_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="guia_aerea_exportador">Guía Aérea</label>
+                                            <input type="text" id="guia_aerea_exportador" name="guia_aerea_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="aerolinea_exportador">Aerolínea</label>
+                                            <input type="text" id="aerolinea_exportador" name="aerolinea_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="invoice_origen_exportador">Invoice (Certificado de Origen)</label>
+                                            <input type="text" id="invoice_origen_exportador" name="invoice_origen_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="guia_de_remision_exportador">Guía de Remisión</label>
+                                            <input type="text" id="guia_de_remision_exportador" name="guia_de_remision_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="ciudad_exportador">Ciudad</label>
+                                            <input type="text" id="ciudad_exportador" name="ciudad_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700" for="fecharegistro_exportador">Fecha de Registro</label>
+                                            <input type="date" id="fecharegistro_exportador" name="fecharegistro_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="productor" class="tab-content" style="display: none;">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {% if template_type == 'exportador-comercializador' %}
+                                            <!-- Campo de búsqueda estilo Google para Productor -->
+                                            <div class="search-container md:col-span-2">
+                                                <input type="text" 
+                                                       id="search_productor" 
+                                                       class="search-input" 
+                                                       placeholder="Buscar productor por nombre o RUC..."
+                                                       autocomplete="off">
+                                            </div>
+
+                                            <!-- Campos del formulario del Productor -->
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="ruc_productor">RUC</label>
+                                                <input type="text" id="ruc_productor" name="ruc_productor" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="razon_social_productor">Razón Social</label>
+                                                <input type="text" id="razon_social_productor" name="razon_social_productor" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="domicilio_fiscal_productor">Domicilio Fiscal</label>
+                                                <input type="text" id="domicilio_fiscal_productor" name="domicilio_fiscal_productor" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="dni_productor">DNI</label>
+                                                <input type="text" id="dni_productor" name="dni_productor" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="departamento_productor">Departamento</label>
+                                                <input type="text" id="departamento_productor" name="departamento_productor" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="factura_productor">Factura N°</label>
+                                                <input type="text" id="factura_productor" name="factura_productor" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="fecha_factura_productor">Fecha Factura</label>
+                                                <input type="date" id="fecha_factura_productor" name="fecha_factura_productor" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="valor_fob_productor">Valor FOB</label>
+                                                <input type="number" step="0.01" id="valor_fob_productor" name="valor_fob_productor" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="peso_bruto_productor">Peso Bruto</label>
+                                                <input type="number" step="0.01" id="peso_bruto_productor" name="peso_bruto_productor" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="guia_remision_productor">Guía de Remisión</label>
+                                                <input type="text" id="guia_remision_productor" name="guia_remision_productor" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="concesion_minera_productor">Concesión Minera Metálica</label>
+                                                <input type="text" id="concesion_minera_productor" name="concesion_minera_productor" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="codigo_ingemmet_n_productor">Código INGEMMET N°</label>
+                                                <input type="text" id="codigo_ingemmet_n_productor" name="codigo_ingemmet_n_productor" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="fecha_registro_productor">Fecha Registro</label>
+                                                <input type="date" id="fecha_registro_productor" name="fecha_registro_productor" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="direccion_concesion_productor">Dirección de la Concesión</label>
+                                                <input type="text" id="direccion_concesion_productor" name="direccion_concesion_productor" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="reinpo_exportador">REINFO</label>
+                                                <input type="text" id="reinpo_exportador" name="reinpo_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <label class="block text-sm font-medium text-gray-700" for="recpo_exportador">RECPO</label>
+                                                <input type="text" id="recpo_exportador" name="recpo_exportador" class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300">
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div id="transporte" class="tab-content" style="display: none;">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {% if template_type == 'exportador-productor' %}
+                                            {% set transporte_fields = [
+                                                'ruc_transporte',
+                                                'razon_social_transporte',
+                                                'domicilio_fiscal_transporte',
+                                                'marca_transporte',
+                                                'placa_transporte',
+                                            ] %}
+                                            {% for field in form if field.name in transporte_fields %}
+                                                <div class="space-y-2">
+                                                    {{ field.label(class="block text-sm font-medium text-gray-700") }}
+                                                    {{ field(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300") }}
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            {% set transporte_fields = [
+                                                'ruc_transporte',
+                                                'razon_social_transporte',
+                                                'domicilio_fiscal_transporte',
+                                                'marca_transporte',
+                                                'placa_transporte',
+                                            ] %}
+                                            {% for field in form if field.name in transporte_fields %}
+                                                <div class="space-y-2">
+                                                    {{ field.label(class="block text-sm font-medium text-gray-700") }}
+                                                    {{ field(class="mt-1 focus:ring-red-500 focus:border-red-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border border-gray-300") }}
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <!-- Botón dentro del formulario, centrado -->
+                                <div class="flex justify-center mt-8">
+                                    <button type="submit" id="submitButton" class="bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 px-8 py-3 rounded-full text-lg font-semibold transition-all duration-300 transform hover:scale-105">
+                                        Generar Instrucción de Embarque
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Add these styles to ensure proper scrolling */
+        html, body {
+            min-height: 100%;
+            overflow-y: auto;
+        }
+        .tab-content {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+    </style>
+    <script>
+        // Tab switching functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabTriggers = document.querySelectorAll('.tab-trigger');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            function switchTab(tabId) {
+                tabContents.forEach(content => {
+                    content.style.display = 'none';
+                });
+
+                tabTriggers.forEach(trigger => {
+                    trigger.classList.remove('bg-red-600', 'text-white');
+                    trigger.classList.add('bg-gray-200', 'text-gray-700');
+                });
+
+                const selectedTab = document.getElementById(tabId);
+                if (selectedTab) {
+                    selectedTab.style.display = 'block';
+                }
+
+                const selectedTrigger = document.querySelector(`[data-tab="${tabId}"]`);
+                if (selectedTrigger) {
+                    selectedTrigger.classList.remove('bg-gray-200', 'text-gray-700');
+                    selectedTrigger.classList.add('bg-red-600', 'text-white');
+                }
+            }
+
+            tabTriggers.forEach(trigger => {
+                trigger.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+
+            // Set the default tab
+            switchTab('exportador');
+        });
+
+        // Autocomplete initialization
+        $(document).ready(function() {
+            console.log('Initializing autocomplete...');
+            
+            $("#search_razon_social").autocomplete({
+                source: function(request, response) {
+                    console.log('Searching for:', request.term);
+                    $.ajax({
+                        url: "/api/search_companies",
+                        dataType: "json",
+                        data: { term: request.term },
+                        success: function(data) {
+                            console.log('Search results:', data);
+                            response(data);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Search error:', error);
+                            console.error('Status:', status);
+                            console.error('Response:', xhr.responseText);
+                        }
+                    });
+                },
+                minLength: 1,
+                delay: 300,
+                select: function(event, ui) {
+                    console.log('Selected company:', ui.item);
+                    const data = ui.item.data;
+                    
+                    // Actualizar campos
+                    $('#ruc_exportador').val(data.ruc || '');
+                    $('#razon_social_exportador').val(data.razon_social || '');
+                    $('#domicilio_fiscal_exportador').val(data.domicilio_fiscal || '');
+                    $('#locales_anexos_exportador').val(data.locales_anexos || '');
+                    $('#objeto_social_exportador').val(data.objeto_actividad_economica || '');
+                    $('#representante_legal_exportador').val(data.representante_legal || '');
+                    $('#dni_exportador').val(data.dni_representante || '');
+                    $('#cargo_exportador').val(data.cargo_representante || '');
+                    $('#telefono_exportador').val(data.telefono || '');
+                    $('#origen_de_los_fondos_exportador').val(data.origen_fondos || '');
+                    
+                    // Log para depuración
+                    console.log('Objeto Social y Actividad Económica:', data.objeto_actividad_economica);
+                    
+                    return false;
+                }
+            }).autocomplete("instance")._renderItem = function(ul, item) {
+                return $("<li>")
+                    .append(`<div class='company-item'>
+                                <span class='company-name'>${item.data.razon_social}</span>
+                                <span class='company-ruc'>RUC: ${item.data.ruc}</span>
+                            </div>`)
+                    .appendTo(ul);
+            };
+            
+            console.log('Autocomplete initialized');
+        });
+
+        $(document).ready(function() {
+            // Inicialización del autocompletado para Productor
+            $("#search_productor").autocomplete({
+                source: function(request, response) {
+                    console.log('Searching for producer:', request.term);
+                    $.ajax({
+                        url: "/api/search_companies",
+                        dataType: "json",
+                        data: { term: request.term },
+                        success: function(data) {
+                            console.log('Search results for producer:', data);
+                            response(data);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Search error:', error);
+                            console.error('Status:', status);
+                            console.error('Response:', xhr.responseText);
+                        }
+                    });
+                },
+                minLength: 1,
+                delay: 300,
+                select: function(event, ui) {
+                    console.log('Selected producer:', ui.item);
+                    const data = ui.item.data;
+                    
+                    // Actualizar campos del productor
+                    $('#ruc_productor').val(data.ruc || '');
+                    $('#razon_social_productor').val(data.razon_social || '');
+                    $('#domicilio_fiscal_productor').val(data.domicilio_fiscal || '');
+                    $('#dni_productor').val(data.dni_representante || '');
+                    
+                    return false;
+                }
+            }).autocomplete("instance")._renderItem = function(ul, item) {
+                return $("<li>")
+                    .append(`<div class='company-item'>
+                                <span class='company-name'>${item.data.razon_social}</span>
+                                <span class='company-ruc'>RUC: ${item.data.ruc}</span>
+                            </div>`)
+                    .appendTo(ul);
+            };
+        });
+    </script>
+  </body>
+</html>
